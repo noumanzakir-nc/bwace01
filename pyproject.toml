@@ -1,0 +1,23 @@
+[build-system]
+requires = ["setuptools>=69"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "bwace"
+version = "0.1.0"
+description = "BW Object Assessment & Classification Engine (BW-ACE)"
+requires-python = ">=3.11"
+dependencies = [
+    "networkx==3.6.1",
+    "streamlit==1.61.1",
+    "pandas==3.0.5",
+    "plotly==6.9.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest==9.1.1",
+]
+
+[tool.setuptools.packages.find]
+where = ["src"]

@@ -1,0 +1,481 @@
+
+1. Overview			
+Tool Name:	BW Object Assessment & Classification Engine (BW-ACE)		
+Purpose:	Analyze BW metadata, usage logs, and dependencies to classify objects as Decommission, Replicate As-Is, or Rebuild as Data Product		
+Demo Data:	Simulated Arla landscape with 22 objects across 13 solution areas		
+Key Outputs:	Classification dashboard, dependency heatmap, wave optimization recommendation		
+			
+			
+2. Functional Requirements			
+2.1 Data Sources			
+
+Data Source,	Format,	Purpose,	Source for Simulated Data
+BW Object Inventory,	CSV/JSON,	List of all BW objects (ADSOs, HANA CVs, Queries, Transformations, DTPs, InfoPackages, Custom Tables),	Section 3.1
+Usage Logs,	CSV/JSON,	Execution history, frequency, last run date, distinct users,	Section 3.2
+Business Criticality Matrix,	CSV/JSON,	Business importance, migration priority, downtime tolerance,	Section 3.3
+Dependency Map,	Graph/JSON,	Logical and operational dependencies between objects/areas,	Section 3.4
+Data Volume Metrics,	CSV/JSON,	Record counts, storage size, load frequency,	Section 3.5
+Complexity Scores,	CSV/JSON,	Technical complexity per object (HANA CV count, custom logic, etc.),	Section 3.6
+			
+2.2 Classification Rules Engine			
+The tool applies a weighted scoring algorithm to classify each object:			
+Classification Categories			
+Category,	Definition,	Score Range	
+Decommission,	Zero or near-zero usage; no active business owner; no strategic value,	0-33	
+Replicate As-Is,	Low-moderate complexity; limited strategic value; pragmatic transition,	34-67	
+Rebuild as Data Product,	High business criticality; high dependency count; modernize for strategic benefit,	68-100	
+			
+Scoring Weights			
+Dimension,	Weight,	Data Source	
+Usage Frequency,	25%,	Usage Logs	
+Distinct Users,	15%,	Usage Logs	
+Business Criticality,	20%,	Business Criticality Matrix	
+Dependency Count (Outgoing),	15%,	Dependency Map	
+Dependency Count (Incoming),	10%,	Dependency Map	
+Technical Complexity,	10%,	Complexity Scores	
+Data Volume,	5%,	Data Volume Metrics	
+			
+Scoring Formula			
+			
+Score = (UsageFrequencyScore × 0.25) + (UserCountScore × 0.15) + (CriticalityScore × 0.20) + 			
+        (OutgoingDependencyScore × 0.15) + (IncomingDependencyScore × 0.10) + 			
+        (ComplexityScore × 0.10) + (VolumeScore × 0.05)			
+			
+Where each dimension score is normalized to 0-100			
+			
+2.3 User Interface Components			
+2.3.1 Dashboard View			
+Component,	Description		
+Classification Summary,	Donut chart showing count of objects by classification		
+Top Objects by Criticality,	Bar chart of top 10 objects by raw score		
+Decommission Candidates,	Table of objects recommended for decommission with rationale		
+Dependency Heatmap,	Visual map showing dependencies between solution areas		
+			
+2.3.2 Object Detail View			
+Component,	Description		
+Object Metadata	ID, "type, solution area, description"
+Classification,	Category assignment and score		
+Usage Metrics,	Last run date, monthly executions, distinct users		
+Dependency View,	Incoming and outgoing dependencies		
+Recommendation Rationale,	Explanation of classification decision		
+			
+2.3.3 Wave Planner View			
+Component,	Description		
+Wave Optimization,	Recommended wave assignment based on dependencies and constraints		
+Timeline View,	Gantt chart showing proposed waves with DMK constraints		
+Risk Assessment,	Risk scores per wave based on complexity and dependencies		
+			
+3. Simulated Arla Data for Demo			
+			
+3.1 BW Object Inventory			
+			
+[			
+  {			
+    "object_id": "FI100GC",			
+    "object_type": "Query",			
+    "solution_area": "Financial Performance",			
+    "description": "Main P&L Query",			
+    "data_volume": "High",			
+    "hana_cv_count": 12,			
+    "adso_count": 8,			
+    "custom_table_count": 2			
+  },			
+  {			
+    "object_id": "FI120",			
+    "object_type": "Query",			
+    "solution_area": "Financial Performance",			
+    "description": "Line Item Reporting",			
+    "data_volume": "High",			
+    "hana_cv_count": 6,			
+    "adso_count": 4,			
+    "custom_table_count": 0			
+  },			
+  {			
+    "object_id": "FI108GC",			
+    "object_type": "Query",			
+    "solution_area": "Financial Performance",			
+    "description": "Period Interval Reporting",			
+    "data_volume": "Medium",			
+    "hana_cv_count": 4,			
+    "adso_count": 3,			
+    "custom_table_count": 0			
+  },			
+  {			
+    "object_id": "FI200",			
+    "object_type": "Query",			
+    "solution_area": "Financial Performance",			
+    "description": "Balance Sheet",			
+    "data_volume": "High",			
+    "hana_cv_count": 10,			
+    "adso_count": 6,			
+    "custom_table_count": 1			
+  },			
+  {			
+    "object_id": "FI901GC",			
+    "object_type": "Query",			
+    "solution_area": "Financial Performance",			
+    "description": "PR Reporting Query",			
+    "data_volume": "Medium",			
+    "hana_cv_count": 3,			
+    "adso_count": 2,			
+    "custom_table_count": 0			
+  },			
+  {			
+    "object_id": "SA100",			
+    "object_type": "Query",			
+    "solution_area": "Sales Performance",			
+    "description": "Sales Model v2.0",			
+    "data_volume": "Very High",			
+    "hana_cv_count": 18,			
+    "adso_count": 12,			
+    "custom_table_count": 3			
+  },			
+  {			
+    "object_id": "SA200",			
+    "object_type": "Query",			
+    "solution_area": "Sales Performance",			
+    "description": "VDRG Reporting",			
+    "data_volume": "High",			
+    "hana_cv_count": 10,			
+    "adso_count": 8,			
+    "custom_table_count": 2			
+  },			
+  {			
+    "object_id": "SC100",			
+    "object_type": "Query",			
+    "solution_area": "Supply Chain",			
+    "description": "S&OP Planning",			
+    "data_volume": "Very High",			
+    "hana_cv_count": 20,			
+    "adso_count": 15,			
+    "custom_table_count": 4			
+  },			
+  {			
+    "object_id": "SC200",			
+    "object_type": "Query",			
+    "solution_area": "Supply Chain",			
+    "description": "Demand Planning (APO/IBP)",			
+    "data_volume": "Very High",			
+    "hana_cv_count": 16,			
+    "adso_count": 12,			
+    "custom_table_count": 3			
+  },			
+  {			
+    "object_id": "PR100",			
+    "object_type": "Query",			
+    "solution_area": "Production",			
+    "description": "Production Variance",			
+    "data_volume": "High",			
+    "hana_cv_count": 25,			
+    "adso_count": 14,			
+    "custom_table_count": 5			
+  },			
+  {			
+    "object_id": "PR200",			
+    "object_type": "Query",			
+    "solution_area": "Production",			
+    "description": "Price/Volume/Use Variance",			
+    "data_volume": "High",			
+    "hana_cv_count": 20,			
+    "adso_count": 10,			
+    "custom_table_count": 4			
+  },			
+  {			
+    "object_id": "IN100",			
+    "object_type": "Query",			
+    "solution_area": "Inventory Management",			
+    "description": "Closing Stock Quantities",			
+    "data_volume": "Medium",			
+    "hana_cv_count": 8,			
+    "adso_count": 6,			
+    "custom_table_count": 2			
+  },			
+  {			
+    "object_id": "IN200",			
+    "object_type": "Query",			
+    "solution_area": "Inventory Management",			
+    "description": "Catch Weight Reporting",			
+    "data_volume": "Medium",			
+    "hana_cv_count": 5,			
+    "adso_count": 4,			
+    "custom_table_count": 1			
+  },			
+  {			
+    "object_id": "PC100",			
+    "object_type": "Query",			
+    "solution_area": "Product Costing",			
+    "description": "Costing Validation",			
+    "data_volume": "High",			
+    "hana_cv_count": 14,			
+    "adso_count": 8,			
+    "custom_table_count": 2			
+  },			
+  {			
+    "object_id": "QM100",			
+    "object_type": "Query",			
+    "solution_area": "Quality Management",			
+    "description": "Inspection Lot Reporting",			
+    "data_volume": "Medium",			
+    "hana_cv_count": 6,			
+    "adso_count": 4,			
+    "custom_table_count": 0			
+  },			
+  {			
+    "object_id": "TR100",			
+    "object_type": "Query",			
+    "solution_area": "Treasury Management",			
+    "description": "Currency Hedging Analysis",			
+    "data_volume": "Low",			
+    "hana_cv_count": 4,			
+    "adso_count": 3,			
+    "custom_table_count": 0			
+  },			
+  {			
+    "object_id": "TR200",			
+    "object_type": "Query",			
+    "solution_area": "Treasury Management",			
+    "description": "Debt & Liquidity",			
+    "data_volume": "Low",			
+    "hana_cv_count": 3,			
+    "adso_count": 2,			
+    "custom_table_count": 0			
+  },			
+  {			
+    "object_id": "LC100",			
+    "object_type": "Query",			
+    "solution_area": "Logistics Costing",			
+    "description": "Shipment Costing",			
+    "data_volume": "Medium",			
+    "hana_cv_count": 6,			
+    "adso_count": 4,			
+    "custom_table_count": 1			
+  },			
+  {			
+    "object_id": "PO100",			
+    "object_type": "Query",			
+    "solution_area": "Purchasing",			
+    "description": "Procurement Reporting",			
+    "data_volume": "Medium",			
+    "hana_cv_count": 7,			
+    "adso_count": 5,			
+    "custom_table_count": 1			
+  },			
+  {			
+    "object_id": "TM100",			
+    "object_type": "Query",			
+    "solution_area": "Transport Management",			
+    "description": "Delivery & Shipment",			
+    "data_volume": "Low",			
+    "hana_cv_count": 5,			
+    "adso_count": 3,			
+    "custom_table_count": 0			
+  },			
+  {			
+    "object_id": "IM100",			
+    "object_type": "Query",			
+    "solution_area": "Investment Management",			
+    "description": "CAPEX Tracking",			
+    "data_volume": "Medium",			
+    "hana_cv_count": 6,			
+    "adso_count": 4,			
+    "custom_table_count": 0			
+  },			
+  {			
+    "object_id": "ZMD1",			
+    "object_type": "Custom Table",			
+    "solution_area": "Production/Inventory",			
+    "description": "Mapping Control Table",			
+    "data_volume": "Medium",			
+    "hana_cv_count": 0,			
+    "adso_count": 0,			
+    "custom_table_count": 0			
+  }			
+]			
+			
+3.2 Usage Logs (Activity Data)			
+			
+[			
+  {"object_id": "FI100GC", "last_run_date": "2026-08-13", "monthly_executions": 280, "distinct_users": 45, "business_owner": "Finance Controller"},			
+  {"object_id": "FI120", "last_run_date": "2026-08-12", "monthly_executions": 180, "distinct_users": 30, "business_owner": "Finance Controller"},			
+  {"object_id": "FI108GC", "last_run_date": "2026-08-11", "monthly_executions": 120, "distinct_users": 25, "business_owner": "Finance Controller"},			
+  {"object_id": "FI200", "last_run_date": "2026-08-12", "monthly_executions": 160, "distinct_users": 20, "business_owner": "Finance Controller"},			
+  {"object_id": "FI901GC", "last_run_date": "2026-08-10", "monthly_executions": 90, "distinct_users": 15, "business_owner": "Finance Controller"},			
+  {"object_id": "SA100", "last_run_date": "2026-08-14", "monthly_executions": 450, "distinct_users": 75, "business_owner": "Sales Director"},			
+  {"object_id": "SA200", "last_run_date": "2026-08-13", "monthly_executions": 300, "distinct_users": 40, "business_owner": "Sales Director"},			
+  {"object_id": "SC100", "last_run_date": "2026-08-14", "monthly_executions": 320, "distinct_users": 100, "business_owner": "S&OP Lead"},			
+  {"object_id": "SC200", "last_run_date": "2026-08-14", "monthly_executions": 250, "distinct_users": 80, "business_owner": "S&OP Lead"},			
+  {"object_id": "PR100", "last_run_date": "2026-08-14", "monthly_executions": 180, "distinct_users": 35, "business_owner": "Production Lead"},			
+  {"object_id": "PR200", "last_run_date": "2026-08-13", "monthly_executions": 140, "distinct_users": 30, "business_owner": "Production Lead"},			
+  {"object_id": "IN100", "last_run_date": "2026-08-12", "monthly_executions": 150, "distinct_users": 40, "business_owner": "Inventory Manager"},			
+  {"object_id": "IN200", "last_run_date": "2025-08-04", "monthly_executions": 2, "distinct_users": 1, "business_owner": "Inventory Analyst"},			
+  {"object_id": "PC100", "last_run_date": "2026-08-10", "monthly_executions": 85, "distinct_users": 20, "business_owner": "Product Costing Lead"},			
+  {"object_id": "QM100", "last_run_date": "2026-08-09", "monthly_executions": 60, "distinct_users": 15, "business_owner": "Quality Manager"},			
+  {"object_id": "TR100", "last_run_date": "2025-10-15", "monthly_executions": 6, "distinct_users": 3, "business_owner": "Treasurer"},			
+  {"object_id": "TR200", "last_run_date": "2025-09-22", "monthly_executions": 3, "distinct_users": 2, "business_owner": "Treasurer"},			
+  {"object_id": "LC100", "last_run_date": "2026-08-08", "monthly_executions": 50, "distinct_users": 12, "business_owner": "Logistics Manager"},			
+  {"object_id": "PO100", "last_run_date": "2026-08-09", "monthly_executions": 70, "distinct_users": 18, "business_owner": "Procurement Manager"},			
+  {"object_id": "TM100", "last_run_date": "2025-11-03", "monthly_executions": 4, "distinct_users": 3, "business_owner": "Transport Manager"},			
+  {"object_id": "IM100", "last_run_date": "2026-08-07", "monthly_executions": 40, "distinct_users": 10, "business_owner": "Investment Manager"},			
+  {"object_id": "ZMD1", "last_run_date": "2026-08-14", "monthly_executions": 75, "distinct_users": 25, "business_owner": "Solution Owner"}			
+]			
+			
+3.3 Business Criticality Matrix			
+			
+[			
+  {"solution_area": "Financial Performance", "criticality": 95, "migration_priority": 1, "downtime_tolerance_hours": 4},			
+  {"solution_area": "Sales Performance", "criticality": 90, "migration_priority": 2, "downtime_tolerance_hours": 8},			
+  {"solution_area": "Supply Chain", "criticality": 95, "migration_priority": 2, "downtime_tolerance_hours": 4},			
+  {"solution_area": "Production", "criticality": 85, "migration_priority": 3, "downtime_tolerance_hours": 12},			
+  {"solution_area": "Inventory Management", "criticality": 80, "migration_priority": 3, "downtime_tolerance_hours": 12},			
+  {"solution_area": "Product Costing", "criticality": 75, "migration_priority": 4, "downtime_tolerance_hours": 24},			
+  {"solution_area": "Quality Management", "criticality": 65, "migration_priority": 5, "downtime_tolerance_hours": 48},			
+  {"solution_area": "Treasury Management", "criticality": 50, "migration_priority": 5, "downtime_tolerance_hours": 24},			
+  {"solution_area": "Logistics Costing", "criticality": 60, "migration_priority": 4, "downtime_tolerance_hours": 24},			
+  {"solution_area": "Purchasing", "criticality": 60, "migration_priority": 4, "downtime_tolerance_hours": 24},			
+  {"solution_area": "Transport Management", "criticality": 45, "migration_priority": 5, "downtime_tolerance_hours": 48},			
+  {"solution_area": "Investment Management", "criticality": 55, "migration_priority": 5, "downtime_tolerance_hours": 48}			
+]			
+			
+			
+3.4 Dependency Map (Logical + Operational)			
+			
+{			
+  "nodes": [			
+    {"id": "FI", "label": "Financial Performance", "type": "solution_area"},			
+    {"id": "SA", "label": "Sales Performance", "type": "solution_area"},			
+    {"id": "SC", "label": "Supply Chain", "type": "solution_area"},			
+    {"id": "PR", "label": "Production", "type": "solution_area"},			
+    {"id": "IN", "label": "Inventory Management", "type": "solution_area"},			
+    {"id": "PC", "label": "Product Costing", "type": "solution_area"},			
+    {"id": "QM", "label": "Quality Management", "type": "solution_area"},			
+    {"id": "TR", "label": "Treasury Management", "type": "solution_area"},			
+    {"id": "LC", "label": "Logistics Costing", "type": "solution_area"},			
+    {"id": "PO", "label": "Purchasing", "type": "solution_area"},			
+    {"id": "TM", "label": "Transport Management", "type": "solution_area"},			
+    {"id": "IM", "label": "Investment Management", "type": "solution_area"},			
+    {"id": "FF", "label": "Financial Forecasting", "type": "external"},			
+    {"id": "DMK", "label": "DMK Integration", "type": "constraint"},			
+    {"id": "ZMD1", "label": "ZMD1 Interface", "type": "shared_object"},			
+    {"id": "SAPPS1", "label": "SAP PS1 Data Loads", "type": "source"}			
+  ],			
+  "edges": [			
+    {"source": "FI", "target": "FF", "type": "logical"},			
+    {"source": "SA", "target": "FF", "type": "logical"},			
+    {"source": "SA", "target": "FI", "type": "logical", "description": "Shared data sources"},			
+    {"source": "PR", "target": "FI", "type": "logical", "description": "GL data dependency"},			
+    {"source": "PR", "target": "IN", "type": "logical", "description": "Material data dependency"},			
+    {"source": "PR", "target": "ZMD1", "type": "operational", "description": "Custom table usage"},			
+    {"source": "IN", "target": "ZMD1", "type": "operational", "description": "Custom table usage"},			
+    {"source": "PR", "target": "FF", "type": "logical", "description": "Forecast data from SAC"},			
+    {"source": "IN", "target": "FF", "type": "logical", "description": "Forecast data from SAC"},			
+    {"source": "PC", "target": "PR", "type": "logical", "description": "Shared datasets"},			
+    {"source": "PC", "target": "FI", "type": "logical", "description": "Leverages PC data"},			
+    {"source": "SC", "target": "FI", "type": "logical", "description": "Planning data dependency"},			
+    {"source": "SC", "target": "FF", "type": "logical", "description": "Planning data"},			
+    {"source": "TR", "target": "FI", "type": "logical", "description": "GL and market data"},			
+    {"source": "LC", "target": "TM", "type": "logical", "description": "Shipment costs"},			
+    {"source": "PO", "target": "SC", "type": "logical", "description": "Forecasting data from IBP"},			
+    {"source": "SC", "target": "SAPPS1", "type": "operational", "description": "Data load dependency"},			
+    {"source": "PR", "target": "SAPPS1", "type": "operational", "description": "Data load dependency"},			
+    {"source": "IN", "target": "SAPPS1", "type": "operational", "description": "Data load dependency"},			
+    {"source": "FI", "target": "SAPPS1", "type": "operational", "description": "Data load dependency"},			
+    {"source": "ALL", "target": "DMK", "type": "constraint", "description": "Limited changes before 2028"}			
+  ]			
+}			
+			
+3.5 Data Volume Metrics			
+			
+[			
+  {"object_id": "FI100GC", "record_count": 8500000, "storage_gb": 45, "load_frequency": "Daily"},			
+  {"object_id": "FI120", "record_count": 4200000, "storage_gb": 22, "load_frequency": "Daily"},			
+  {"object_id": "FI108GC", "record_count": 2800000, "storage_gb": 15, "load_frequency": "Daily"},			
+  {"object_id": "FI200", "record_count": 6200000, "storage_gb": 35, "load_frequency": "Daily"},			
+  {"object_id": "FI901GC", "record_count": 1200000, "storage_gb": 8, "load_frequency": "Weekly"},			
+  {"object_id": "SA100", "record_count": 15000000, "storage_gb": 80, "load_frequency": "Daily"},			
+  {"object_id": "SA200", "record_count": 8000000, "storage_gb": 42, "load_frequency": "Daily"},			
+  {"object_id": "SC100", "record_count": 18000000, "storage_gb": 95, "load_frequency": "Hourly"},			
+  {"object_id": "SC200", "record_count": 12000000, "storage_gb": 65, "load_frequency": "Hourly"},			
+  {"object_id": "PR100", "record_count": 9500000, "storage_gb": 50, "load_frequency": "Daily"},			
+  {"object_id": "PR200", "record_count": 7200000, "storage_gb": 38, "load_frequency": "Daily"},			
+  {"object_id": "IN100", "record_count": 4800000, "storage_gb": 25, "load_frequency": "Daily"},			
+  {"object_id": "IN200", "record_count": 1500000, "storage_gb": 8, "load_frequency": "Weekly"},			
+  {"object_id": "PC100", "record_count": 3500000, "storage_gb": 20, "load_frequency": "Daily"},			
+  {"object_id": "QM100", "record_count": 2200000, "storage_gb": 12, "load_frequency": "Weekly"},			
+  {"object_id": "TR100", "record_count": 800000, "storage_gb": 5, "load_frequency": "Weekly"},			
+  {"object_id": "TR200", "record_count": 600000, "storage_gb": 3, "load_frequency": "Weekly"},			
+  {"object_id": "LC100", "record_count": 1800000, "storage_gb": 10, "load_frequency": "Daily"},			
+  {"object_id": "PO100", "record_count": 2000000, "storage_gb": 12, "load_frequency": "Daily"},			
+  {"object_id": "TM100", "record_count": 900000, "storage_gb": 5, "load_frequency": "Weekly"},			
+  {"object_id": "IM100", "record_count": 1200000, "storage_gb": 7, "load_frequency": "Weekly"},			
+  {"object_id": "ZMD1", "record_count": 250000, "storage_gb": 2, "load_frequency": "Daily"}			
+]			
+			
+3.6 Complexity Scores			
+			
+[			
+  {"object_id": "FI100GC", "hana_cv_count": 12, "transformation_count": 8, "custom_logic_present": true, "interface_count": 5},			
+  {"object_id": "FI120", "hana_cv_count": 6, "transformation_count": 4, "custom_logic_present": false, "interface_count": 3},			
+  {"object_id": "FI108GC", "hana_cv_count": 4, "transformation_count": 3, "custom_logic_present": false, "interface_count": 2},			
+  {"object_id": "FI200", "hana_cv_count": 10, "transformation_count": 6, "custom_logic_present": true, "interface_count": 4},			
+  {"object_id": "FI901GC", "hana_cv_count": 3, "transformation_count": 2, "custom_logic_present": false, "interface_count": 2},			
+  {"object_id": "SA100", "hana_cv_count": 18, "transformation_count": 12, "custom_logic_present": true, "interface_count": 7},			
+  {"object_id": "SA200", "hana_cv_count": 10, "transformation_count": 8, "custom_logic_present": true, "interface_count": 5},			
+  {"object_id": "SC100", "hana_cv_count": 20, "transformation_count": 15, "custom_logic_present": true, "interface_count": 8},			
+  {"object_id": "SC200", "hana_cv_count": 16, "transformation_count": 12, "custom_logic_present": true, "interface_count": 6},			
+  {"object_id": "PR100", "hana_cv_count": 25, "transformation_count": 14, "custom_logic_present": true, "interface_count": 9},			
+  {"object_id": "PR200", "hana_cv_count": 20, "transformation_count": 10, "custom_logic_present": true, "interface_count": 7},			
+  {"object_id": "IN100", "hana_cv_count": 8, "transformation_count": 6, "custom_logic_present": true, "interface_count": 4},			
+  {"object_id": "IN200", "hana_cv_count": 5, "transformation_count": 4, "custom_logic_present": false, "interface_count": 2},			
+  {"object_id": "PC100", "hana_cv_count": 14, "transformation_count": 8, "custom_logic_present": true, "interface_count": 5},			
+  {"object_id": "QM100", "hana_cv_count": 6, "transformation_count": 4, "custom_logic_present": false, "interface_count": 2},			
+  {"object_id": "TR100", "hana_cv_count": 4, "transformation_count": 3, "custom_logic_present": false, "interface_count": 2},			
+  {"object_id": "TR200", "hana_cv_count": 3, "transformation_count": 2, "custom_logic_present": false, "interface_count": 1},			
+  {"object_id": "LC100", "hana_cv_count": 6, "transformation_count": 4, "custom_logic_present": false, "interface_count": 3},			
+  {"object_id": "PO100", "hana_cv_count": 7, "transformation_count": 5, "custom_logic_present": false, "interface_count": 3},			
+  {"object_id": "TM100", "hana_cv_count": 5, "transformation_count": 3, "custom_logic_present": false, "interface_count": 2},			
+  {"object_id": "IM100", "hana_cv_count": 6, "transformation_count": 4, "custom_logic_present": false, "interface_count": 2},			
+  {"object_id": "ZMD1", "hana_cv_count": 0, "transformation_count": 0, "custom_logic_present": true, "interface_count": 4}			
+]			
+			
+4. Technology Architecture			
+			
+4.1 Stack			
+Component,	Technology,	Purpose	
+Frontend,	Streamlit (Python)	Rapid UI development for demo	
+Backend,	Python	Data processing, scoring engine, API	
+Analytics,	Pandas, NetworkX	Data manipulation, dependency graph	
+Visualization,	Plotly, NetworkX	Charts, dependency heatmap	
+Data Storage,	JSON/CSV	Simulated data storage	
+
+			
+			
+4.2 Folder Structure			
+			
+bw-assessment-tool/			
+├── app.py                          # Streamlit main application			
+├── requirements.txt                # Python dependencies			
+├── data/			
+│   ├── object_inventory.json       # [3.1] BW Object Inventory			
+│   ├── usage_logs.json             # [3.2] Usage Logs			
+│   ├── criticality.json            # [3.3] Business Criticality Matrix			
+│   ├── dependencies.json           # [3.4] Dependency Map			
+│   ├── data_volume.json            # [3.5] Data Volume Metrics			
+│   └── complexity.json             # [3.6] Complexity Scores			
+├── engine/			
+│   ├── scoring.py                  # Scoring algorithm			
+│   ├── classification.py           # Classification rules			
+│   ├── dependency_analyzer.py      # Dependency analysis			
+│   └── wave_planner.py             # Wave optimization			
+├── demo/			
+│   ├── demo_data_generator.py      # Generate simulated data			
+│   └── demo_runner.py              # Run demo with pre-loaded data			
+├── ui/			
+│   ├── dashboard.py                # Dashboard view			
+│   ├── object_detail.py            # Object detail view			
+│   ├── dependency_view.py          # Dependency heatmap			
+│   └── wave_planner_view.py        # Wave planning view			
+└── outputs/			
+    ├── classification_report.csv   # Generated during demo			
+    └── wave_recommendation.json    # Generated during demo			
+			
+			

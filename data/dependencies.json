@@ -1,0 +1,43 @@
+{
+  "nodes": [
+    {"node_id": "FI", "label": "Financial Performance", "node_type": "SOLUTION_AREA"},
+    {"node_id": "SA", "label": "Sales Performance", "node_type": "SOLUTION_AREA"},
+    {"node_id": "SC", "label": "Supply Chain", "node_type": "SOLUTION_AREA"},
+    {"node_id": "PR", "label": "Production", "node_type": "SOLUTION_AREA"},
+    {"node_id": "IN", "label": "Inventory Management", "node_type": "SOLUTION_AREA"},
+    {"node_id": "PC", "label": "Product Costing", "node_type": "SOLUTION_AREA"},
+    {"node_id": "QM", "label": "Quality Management", "node_type": "SOLUTION_AREA"},
+    {"node_id": "TR", "label": "Treasury Management", "node_type": "SOLUTION_AREA"},
+    {"node_id": "LC", "label": "Logistics Costing", "node_type": "SOLUTION_AREA"},
+    {"node_id": "PO", "label": "Purchasing", "node_type": "SOLUTION_AREA"},
+    {"node_id": "TM", "label": "Transport Management", "node_type": "SOLUTION_AREA"},
+    {"node_id": "IM", "label": "Investment Management", "node_type": "SOLUTION_AREA"},
+    {"node_id": "FF", "label": "Financial Forecasting", "node_type": "EXTERNAL"},
+    {"node_id": "DMK", "label": "DMK Integration", "node_type": "CONSTRAINT"},
+    {"node_id": "ZMD1", "label": "ZMD1 Interface", "node_type": "SHARED_OBJECT"},
+    {"node_id": "SAPPS1", "label": "SAP PS1 Data Loads", "node_type": "SOURCE"}
+  ],
+  "edges": [
+    {"source": "FI", "target": "FF", "edge_type": "LOGICAL"},
+    {"source": "SA", "target": "FF", "edge_type": "LOGICAL"},
+    {"source": "SA", "target": "FI", "edge_type": "LOGICAL", "description": "Shared data sources"},
+    {"source": "PR", "target": "FI", "edge_type": "LOGICAL", "description": "GL data dependency"},
+    {"source": "PR", "target": "IN", "edge_type": "LOGICAL", "description": "Material data dependency"},
+    {"source": "PR", "target": "ZMD1", "edge_type": "OPERATIONAL", "description": "Custom table usage"},
+    {"source": "IN", "target": "ZMD1", "edge_type": "OPERATIONAL", "description": "Custom table usage"},
+    {"source": "PR", "target": "FF", "edge_type": "LOGICAL", "description": "Forecast data from SAC"},
+    {"source": "IN", "target": "FF", "edge_type": "LOGICAL", "description": "Forecast data from SAC"},
+    {"source": "PC", "target": "PR", "edge_type": "LOGICAL", "description": "Shared datasets"},
+    {"source": "PC", "target": "FI", "edge_type": "LOGICAL", "description": "Leverages PC data"},
+    {"source": "SC", "target": "FI", "edge_type": "LOGICAL", "description": "Planning data dependency"},
+    {"source": "SC", "target": "FF", "edge_type": "LOGICAL", "description": "Planning data"},
+    {"source": "TR", "target": "FI", "edge_type": "LOGICAL", "description": "GL and market data"},
+    {"source": "LC", "target": "TM", "edge_type": "LOGICAL", "description": "Shipment costs"},
+    {"source": "PO", "target": "SC", "edge_type": "LOGICAL", "description": "Forecasting data from IBP"},
+    {"source": "SC", "target": "SAPPS1", "edge_type": "OPERATIONAL", "description": "Data load dependency"},
+    {"source": "PR", "target": "SAPPS1", "edge_type": "OPERATIONAL", "description": "Data load dependency"},
+    {"source": "IN", "target": "SAPPS1", "edge_type": "OPERATIONAL", "description": "Data load dependency"},
+    {"source": "FI", "target": "SAPPS1", "edge_type": "OPERATIONAL", "description": "Data load dependency"},
+    {"source": "ALL", "target": "DMK", "edge_type": "CONSTRAINT", "description": "Limited changes before 2028"}
+  ]
+}
