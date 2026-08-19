@@ -15,7 +15,20 @@ from bwace.engine.models import (
     ValidationReport,
     WaveConfig,
 )
-from bwace.app.theme import category_style
+from bwace.app.theme import category_style, palette
+
+
+def page_header(title: str, subtitle: str) -> None:
+    # st.header must stay first and carry the exact view name; the smoke tests
+    # assert at.get("header")[0].value equals the active view.
+    st.header(title)
+    st.caption(subtitle)
+    st.divider()
+
+
+def sidebar_section(label: str) -> None:
+    st.divider()
+    st.caption(label)
 
 
 def kpi_strip(kpis: LandscapeKpis) -> None:
@@ -45,8 +58,13 @@ def guard_rule_badge(classification: Classification) -> None:
     if classification.determinant is Determinant.SCORE:
         return
     label = _GUARD_LABELS[classification.determinant]
+    # warm_neutral is a genuine sand tint again, so the badge reads as a warning
+    # rather than as plain grey chrome (BR-P1.8).
+    warm_neutral = palette()["warm_neutral"].hex
+    decommission = palette()["category_decommission"].hex
     st.markdown(
-        f"<span style='background-color:#f6eeee; color:#02462f; border:1px solid #9c4f1f; "
+        f"<span style='background-color:{warm_neutral}; color:{decommission}; "
+        f"border:1px solid {decommission}; "
         f"padding:2px 8px; border-radius:4px; font-size:0.85em;'>\u26a0 {label}</span>",
         unsafe_allow_html=True,
     )

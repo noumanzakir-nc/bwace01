@@ -9,7 +9,10 @@ from bwace.app import widgets
 
 
 def render(result: AssessmentResult, landscape) -> None:
-    st.header("Object Detail")
+    widgets.page_header(
+        "Object Detail",
+        "Every input, weight and rule behind a single object's classification.",
+    )
 
     options = {f"{a.object_id} — {a.bw_object.description}": a.object_id for a in result.assessments}
     selection = st.selectbox("Select an object", list(options.keys()), key="object-detail-selector")
@@ -33,22 +36,25 @@ def render(result: AssessmentResult, landscape) -> None:
         st.write(f"Business Value: {assessment.business_value.total:.1f}")
         st.write(f"Technical Effort: {assessment.technical_effort.total:.1f}")
 
-    st.markdown("**Usage Metrics**")
+    st.divider()
+    st.subheader("Usage Metrics")
     st.write(f"Last run: {assessment.usage.last_run_date}")
     st.write(f"Monthly executions: {assessment.usage.monthly_executions}")
     st.write(f"Distinct users: {assessment.usage.distinct_users}")
     st.write(f"Business owner: {assessment.usage.business_owner}")
 
+    st.divider()
+    st.subheader("Dependencies")
     col3, col4 = st.columns(2)
     with col3:
-        st.markdown("**Incoming Dependencies**")
+        st.markdown("**Incoming**")
         if assessment.incoming:
             for edge in assessment.incoming:
                 st.write(f"{edge.source} → {edge.target} ({edge.edge_type.value})")
         else:
             st.caption("None")
     with col4:
-        st.markdown("**Outgoing Dependencies**")
+        st.markdown("**Outgoing**")
         if assessment.outgoing:
             for edge in assessment.outgoing:
                 st.write(f"{edge.source} → {edge.target} ({edge.edge_type.value})")
@@ -64,8 +70,10 @@ def render(result: AssessmentResult, landscape) -> None:
             f"average of {areas[0]} ({crits[0]}) and {areas[1]} ({crits[1]})."
         )
 
-    st.markdown("**Score Derivation**")
+    st.divider()
+    st.subheader("Score Derivation")
     widgets.derivation_table(assessment)
 
-    st.markdown("**Rationale**")
+    st.divider()
+    st.subheader("Rationale")
     st.write(assessment.classification.rationale)

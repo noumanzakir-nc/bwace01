@@ -5,12 +5,16 @@ import streamlit as st
 
 from bwace.engine.models import Landscape, Scenario
 from bwace.engine.service import compare
+from bwace.app import frames, widgets
 
 
 def render(landscape: Landscape) -> None:
-    st.header("Scenario Compare")
+    widgets.page_header(
+        "Scenario Compare",
+        "Save configurations as named scenarios, then compare their parameters and outcomes side by side.",
+    )
 
-    st.markdown("**Save Current Configuration**")
+    st.subheader("Save Current Configuration")
     name = st.text_input("Scenario name", key="scenario-name-input")
     if st.button("Save Scenario", key="scenario-save-button"):
         if not name.strip():
@@ -31,6 +35,7 @@ def render(landscape: Landscape) -> None:
         st.info("Save at least two scenarios to compare them.")
         return
 
+    st.divider()
     names = list(scenarios.keys())
     col1, col2 = st.columns(2)
     with col1:
@@ -40,14 +45,13 @@ def render(landscape: Landscape) -> None:
 
     diff = compare(landscape, scenarios[left_name], scenarios[right_name])
 
+    st.subheader("Scenario Configuration")
+    config_frame = frames.scenario_config_frame(scenarios[left_name], scenarios[right_name])
+    st.dataframe(config_frame, hide_index=True, key="scenario-compare-config-table")
+
     st.subheader("Distribution")
-    col3, col4 = st.columns(2)
-    with col3:
-        st.write(f"**{left_name}**")
-        st.write({c.value: n for c, n in diff.left_distribution.items()})
-    with col4:
-        st.write(f"**{right_name}**")
-        st.write({c.value: n for c, n in diff.right_distribution.items()})
+    dist_frame = frames.distribution_frame(diff)
+    st.dataframe(dist_frame, hide_index=True, key="scenario-compare-distribution-table")
 
     st.subheader(f"Changed Objects ({len(diff.changed)})")
     if not diff.changed:

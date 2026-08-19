@@ -573,3 +573,259 @@ All plan steps marked [x] via the same variable-free PowerShell replace pattern 
 **Context**: CONSTRUCTION - Build and Test complete, awaiting approval (GATE)
 
 ---
+
+## Post-Generation Bug Fix — Sidebar Button and Expander Contrast
+**Timestamp**: 2026-08-19T00:00:00Z
+**User Input**: "using AI-DLC, please update the colors of front end application. For example the button in left menu \"Reset to defaults\" is white and the text is only visible when i hover over it. Also in left menu, when i expand \"Guard rule parameters\" the item becomes white and text can't be read."
+
+**AI Response**: This is a simple, isolated bug fix within already-generated and approved Unit 2 (`presentation-app`) code, not a scope or requirements change — no re-entry into Requirements/Stories/Design was needed per the adaptive workflow's "simple bug fixes with clear, isolated scope" skip criterion.
+
+**Root cause**: `theme.py`'s sidebar CSS applies a blanket rule (`section[data-testid="stSidebar"] * { color: header_text }`, i.e. white) to force readable text against the dark-green sidebar background. Two native Streamlit elements render their own light background inside the sidebar, defeating that assumption:
+- `st.button` (`data-testid^="stBaseButton"`) has a light/card-coloured native background; only its hover state darkens enough for the forced-white text to read, so the resting state is white-on-white.
+- `st.expander`'s header (`summary` element) switches to a light background tint (Streamlit's `bgMix`) while expanded, again leaving forced-white text on a light background.
+
+**Fix applied** in `src/bwace/app/theme.py` `apply()`: added three explicit CSS rules confined to `section[data-testid="stSidebar"]`, using only already-approved, contrast-verified `PALETTE` roles (no new hex values, no change to `BR-P1` palette):
+- Buttons: `card` (`#ffffff`) background, `header` (`#02462f`) text, `accent` (`#82ce71`) border; hover switches background to `accent`, keeping `header` text (verified pair 5.74:1 in `BR-P1.3`).
+- Expander header (`summary`): pinned to `header` background / `header_text` (`#ffffff`) foreground regardless of expanded state (verified pair 10.94:1 in `BR-P1.3`).
+
+**Verification**: Full test suite re-run — 73/73 pass, no regressions. No new palette roles or hex values introduced, so `BR-P1.3`/`BR-P1.4` contrast enforcement and its tests remain valid without modification.
+
+**Context**: 🟢 CONSTRUCTION — targeted fix to Unit 2 code generation output, post Build-and-Test gate. Does not change stage progress or gate status recorded in `aidlc-state.md`.
+
+---
+
+## Post-Generation Bug Fix — Arrow Serialization Warning on risk_band
+**Timestamp**: 2026-08-19T00:00:00Z
+**User Input**: Reported an execution log warning: "Serialization of dataframe to Arrow table was unsuccessful... pyarrow.lib.ArrowInvalid: Could not convert <RiskBand.MEDIUM: 'MEDIUM'>... Conversion failed for column risk_band with type object". Noted the application otherwise works correctly.
+
+**AI Response**: Isolated, clearly-scoped bug fix in already-generated Unit 2 code — no re-entry into earlier stages needed, same class of change as the prior sidebar-contrast fix.
+
+**Root cause**: `frames.gantt_frame()` (`src/bwace/app/frames.py`) stores the raw `RiskBand` enum instance in the `risk_band` column so `charts.wave_gantt()` can look it up in `theme.risk_style()`. `wave_planner.py`'s "Wave Assignments" table passed that same `risk_band` column straight into `st.dataframe()`. PyArrow cannot infer a type for a raw Python `Enum` member, so `pa.Table.from_pandas` raises `ArrowInvalid`; Streamlit catches it, logs the traceback, and falls back to a string-coerced column — hence the app kept working but the log showed the trace on every render.
+
+Confirmed this is exactly the pattern the codebase had already solved for the `category` column in `assessments_frame()` (kept the raw enum for chart/style lookups, added a separate `category_label` string column for display) — `risk_band` was the one place this convention wasn't applied.
+
+**Fix applied**:
+- `frames.py` `gantt_frame()`: added a `risk_band_label` string column (`wave.risk.band.value.title()`, e.g. `"Medium"`), alongside the existing raw-enum `risk_band` column used by `charts.wave_gantt()`.
+- `views/wave_planner.py`: "Wave Assignments" `st.dataframe` now selects `risk_band_label` (renamed to `risk_band` for display) instead of the raw enum column.
+- `charts.py` `wave_gantt()` unchanged — it already consumed the raw enum only through `_risk_colour_label()`, a plain Python dict lookup, never through Arrow.
+
+**Verification**: Full test suite re-run — 73/73 pass. Manually rebuilt the bundled landscape end-to-end and passed the exact display frame through `pyarrow.Table.from_pandas` directly — conversion succeeds with no warning (previously reproduced the reported `ArrowInvalid` before the fix, confirmed after).
+
+**Context**: 🟢 CONSTRUCTION — targeted fix to Unit 2 code generation output, post Build-and-Test gate. Does not change stage progress or gate status recorded in `aidlc-state.md`.
+
+---
+
+
+---
+
+## Post-Approval UI Change — Colour Theme Restyle
+**Timestamp**: 2026-08-19T00:00:00Z
+**User Input**: "using AI-DLC, I want to change the color theme of my front end application. I want the colors and background gradient similar to this website:https://cloud.ibm.com/estimatorThe colors hex could be (161616, ffffff, e8e8e8, 0050e6)"
+
+Checked memory graph per hook instruction — searched for UI theming / colour palette conventions, none stored beyond the existing "minimal code comments" and "memory scope" preferences, which remain in effect and were applied (no new project detail written to memory).
+
+**AI Response**: This is a small, well-scoped implementation change to an already-built, approved unit (`presentation-app`), not a new feature requiring the full Requirements/Stories/Design gate sequence. Treated as a direct, low-risk code change with documentation kept in sync, consistent with the adaptive workflow principle (only executing stages that add value).
+
+Attempted to fetch `https://cloud.ibm.com/estimator` directly — returned an auth-gated page with no usable content. Used web search to confirm the site follows the IBM Carbon Design System's dark (`g100`, `#161616`) console chrome over light content areas (`#e8e8e8`/`#ffffff`), with `#0050e6` (Carbon "Blue 60") as the interactive/accent colour — consistent with the four hex values the user supplied.
+
+**Contrast verification performed** (reusing the checker validated in `test_theme_contrast.py` against 5 known WCAG anchors):
+- `#161616` on `#ffffff`/`#e8e8e8`: 18.10:1 / 14.77:1 — Pass AAA
+- `#0050e6` on `#ffffff`/`#e8e8e8`: 6.38:1 / 5.21:1 — Pass AA (now usable as text on light backgrounds, unlike the retired `#82ce71` accent)
+- `#0050e6` on `#161616`: 2.84:1 — Fails AA, so blue text is never placed on the dark sidebar; sidebar text stays white
+- Existing classification colours (`#02462f`, `#82ce71`, `#9c4f1f`, governed by NFR-4.4) re-verified against the new `#e8e8e8` background — all still pass, so they were left unchanged since they are semantic business-rule colours, not chrome
+
+**Changes made**:
+- `src/bwace/app/theme.py` — `PALETTE` updated: `app_background`→`#e8e8e8`, `header`→`#161616`, `heading`/`accent`→`#0050e6`, `warm_neutral`→`#e8e8e8`. Sidebar background changed from a flat fill to a CSS `linear-gradient(160deg, #161616 0%, #161616 55%, #0050e6 130%)`, echoing the estimator's diagonal gradient. Added a hover-state text-colour override so button text stays white against the blue hover fill (previously black-on-green, now correctly white-on-blue).
+- `src/bwace/app/widgets.py` — `guard_rule_badge` hardcoded hex literals replaced with `palette()` lookups (was already a latent BR-P1.4a violation; fixed opportunistically since the values were changing anyway).
+- `src/bwace/app/charts.py` — dependency heatmap colourscale endpoint changed from the literal `#02462f` to `palette()["heading"].hex`, so it tracks the theme instead of being pinned to the old brand green.
+- `tests/app/test_theme_contrast.py` — `test_accent_fails_on_white_and_is_prohibited` renamed/split into `test_category_replicate_fails_on_white_and_is_prohibited` (the prohibition now correctly applies to `category_replicate`/`#82ce71`, not `accent`) and `test_accent_passes_aa_on_light_backgrounds` (new accent `#0050e6` is text-safe on light backgrounds, unlike the old one).
+- `aidlc-docs/construction/presentation-app/functional-design/business-rules.md` BR-P1.1 — marked superseded for the re-themed chrome roles, new palette table and BR-P1.1a contrast table added; category colours annotated as unchanged/semantic.
+
+**Verification**: Full test suite run — 74/74 passed (`.venv\Scripts\python -m pytest -q`), including all 7 (5 original + 2 replacement) theme contrast tests.
+
+**Context**: Direct implementation change to approved, already-built code. No new gate required — user instruction was specific and unambiguous (exact hex values supplied), and the change is confined to presentation styling with no functional, data, or business-rule impact.
+
+---
+
+## Post-Approval UI Change — Sidebar Colour + Donut Label Padding Fix
+**Timestamp**: 2026-08-19T00:00:00Z
+**User Input**: "I like the new design, one thing I noticed is the black color on left menu, which doesn't look good with overall theme as it's a shade of blue and light colors. Secondly, the classfication summary chart has labels going out of the component, perhaps some padding on the charts would help keeping text inside."
+
+Checked memory graph per hook instruction — no new relevant entries beyond the previously retrieved preferences (minimal comments, memory scope rule), which remain in effect. No new durable facts warranted a memory write for this iteration (feedback is project-specific styling detail, correctly kept in `aidlc-docs/` per the memory scope rule rather than the graph).
+
+**AI Response**: Both a small, direct implementation fix, same treatment as the prior theming change (no new gate).
+
+1. **Sidebar colour**: `header` role changed from `#161616` (near-black) to `#001d6c` (IBM Carbon "Blue 80", a dark blue in the same family as the `#0050e6` accent), keeping the same gradient mechanism (`linear-gradient(160deg, header → accent)`). Re-verified contrast: white text on `#001d6c` = 15.08:1 (AAA); `#001d6c` on `#e8e8e8`/`#ffffff` = 12.31:1/15.08:1 (AAA). `#0050e6` on `#001d6c` = 2.36:1, still fails AA, so blue text is still never placed on the header — sidebar text stays white as before.
+2. **Donut label overflow**: `classification_donut` in `charts.py` changed from default (outside) label placement to `textposition="inside"` with `insidetextorientation="radial"`, and the chart's own margin increased to `t=60, b=60` (from the shared 40px template) so slice labels render inside the pie/donut ring rather than being clipped at the card edge.
+
+**Changes made**:
+- `src/bwace/app/theme.py` — `header` hex updated; gradient stop percentage adjusted 130%→140% to keep the transition proportion visually similar with the new colour.
+- `src/bwace/app/charts.py` — `classification_donut` label positioning and margin updated.
+- `tests/app/test_theme_contrast.py` — renamed `test_dark_green_on_backgrounds_passes_aa` → `test_header_colour_on_backgrounds_passes_aa` (name no longer accurate now that header is blue, not green).
+- `aidlc-docs/construction/presentation-app/functional-design/business-rules.md` — BR-P1.1/BR-P1.1a hex and ratios updated with a revision note; BR-P6.12 added documenting the donut fix.
+
+**Verification**: Full test suite run — 74/74 passed.
+
+**Context**: Direct implementation change, second iteration on the same restyle. No new gate — feedback was specific and unambiguous.
+
+---
+
+## Post-Approval UI Change — Lighter Sidebar + Dark-Mode Toggle Disabled
+**Timestamp**: 2026-08-19T00:00:00Z
+**User Input**: "I think the left menu needs to be even lighter in colors, and now I notice the dark mode toggle of Streamlit doesn't make it actually dark, the color themes on dark are totally incorrect."
+
+Checked memory graph per hook instruction — no new relevant entries beyond previously retrieved preferences (minimal comments, memory scope rule), which remain in effect. This iteration's specifics (exact hex values, Streamlit theming mechanics) are project-specific and correctly kept in `aidlc-docs/`, not written to the memory graph.
+
+**AI Response**: Two issues, both direct implementation fixes, same no-new-gate treatment as the prior two theming iterations.
+
+**Issue 1 — sidebar still too dark**: even after the previous fix to `#001d6c`, the sidebar was a solid dark fill against an otherwise light, blue-accented body. Changed the sidebar's *fill* from a dark gradient to a light one: new palette role `sidebar_background` = `#eef4ff` (a pale blue tint, distinguishable in luminance from both `app_background` `#e8e8e8` and `card` `#ffffff` while still reading as part of the same blue family as `accent`). Sidebar background is now `linear-gradient(160deg, sidebar_background → card)`. `header` (`#001d6c`) moved from a fill role to the sidebar's *text* colour — verified 13.66:1 on `#eef4ff` and 15.08:1 on `#ffffff`, both AAA, comfortably clearing the 4.5:1 AA minimum.
+
+**Issue 2 — broken dark mode**: investigated root cause rather than patching symptoms. The application's entire visual theme (backgrounds, sidebar, headings) is applied via a single custom CSS block injected in `theme.apply()`. Streamlit's built-in Settings-menu dark theme only recolours Streamlit's own native widget chrome — it has no knowledge of this app's injected CSS. Toggling it therefore left the custom CSS light-themed while native widgets went dark, producing the reported incoherent result. Two remediation paths exist: (a) author and maintain a second, fully dark CSS theme so the app tracks Streamlit's toggle, or (b) disable the toggle since this is a demo/PoC with one deliberately fixed, WCAG-verified theme (NFR-1 explicitly scopes this as a demo tool, not a production app requiring theme parity). Chose (b) — added `.streamlit/config.toml` with `client.toolbarMode = "minimal"`, which hides the Settings menu's theme switcher (confirmed via Streamlit's own config.toml reference documentation, fetched from the streamlit/docs GitHub repository). This is the officially documented mechanism for this exact purpose (Streamlit's `st.logo` docs recommend the same option specifically when an app's custom look does not work well across light/dark modes).
+
+**Changes made**:
+- `src/bwace/app/theme.py` — added `sidebar_background` palette role; sidebar CSS gradient changed from a dark fill to a light one; `header` repurposed as sidebar text colour only; button/expander CSS adjusted to pair correctly with the new light sidebar; comment added explaining the toggle-disable decision.
+- `.streamlit/config.toml` — created, `client.toolbarMode = "minimal"`.
+- `tests/app/test_theme_contrast.py` — added `test_header_text_passes_aa_on_sidebar_background`.
+- `aidlc-docs/construction/presentation-app/functional-design/business-rules.md` — BR-P1.1a extended with a second revision note; new BR-P1.6 documents the theme-switch decision and its rationale.
+
+**Verification**: Full test suite run — 75/75 passed (`.venv\Scripts\python -m pytest -q`).
+
+**Context**: Direct implementation change, third iteration on the presentation-app theme. No new gate — both pieces of feedback were specific and unambiguous, and the dark-mode fix required root-cause diagnosis (per the workflow's failure-loop guidance) rather than a surface patch.
+
+---
+
+
+---
+
+## New Feature Request — View Source Data
+**Timestamp**: 2026-08-19T00:00:00Z
+**User Input**: "using AI-DLC, I want to have an option on frontend application to view source data."
+
+**Context**: Received while Build and Test remains the open gate (awaiting approval) for the existing BW-ACE project. This is a new, additive request against `presentation-app`, an already-built and approved unit.
+
+**AI Response**: Checked memory graph per hook instruction — no prior context on a "view source data" or raw-data-browser feature found; existing stored preferences (minimal code comments, memory scope rule, shell notes) remain in effect and are not relevant to this feature's scope.
+
+Performed intent analysis:
+- **Request type**: Enhancement — new UI capability added to an existing, already-built unit (`presentation-app`)
+- **Scope**: Single component/unit — no engine changes anticipated; likely a new sidebar view plus read-only table rendering of the six already-loaded datasets
+- **Complexity**: Simple-to-moderate — no new domain logic, but ambiguous on presentation details (placement, scope of "source data", per-object vs whole-dataset)
+- **Clarity**: Request is clear on intent but underspecified on scope/placement/format
+
+Determined this warrants a short clarification round (Standard depth) rather than proceeding on assumptions, per Requirements Analysis Step 5/6. Created `aidlc-docs/inception/requirements/source-data-view-questions.md` with 5 questions covering scope, placement, format, filtering, and export.
+
+**Context**: INCEPTION - Requirements Analysis (adaptive, enhancement) — awaiting user answers (GATE)
+
+
+---
+
+## Source Data View — Answers Received and Implemented
+**Timestamp**: 2026-08-19T00:00:00Z
+**User Input**: "I've answered all questions"
+
+**Answers extracted from `source-data-view-questions.md`**: Q1=A (all six datasets), Q2=A (new sidebar nav entry), Q3=A (plain read-only table per dataset), Q4=A (no search/filter), Q5=B (per-dataset CSV download button).
+
+**AI Response**: All 5 answered, no missing/invalid responses. Analysed for contradictions/ambiguities: none found — Q5=B diverges from the recommended "no export" option but is internally consistent with Q1-Q4 and does not conflict with any existing requirement (existing exports FR-10.1/10.2 are classification/wave outputs, not raw source data, so no overlap). Proceeded directly to implementation without a further clarification round, per the earlier framing that this is a small, well-scoped addition to already-approved, already-built code.
+
+Read `main.py`, `frontend-components.md`, `frames.py`, `models.py`, `loader.py`, `object_detail.py`, `export.py`, and existing tests to match conventions before writing code.
+
+**Implementation**:
+- 7 new frame functions in `frames.py` (one per raw dataset/collection), all pure functions of `Landscape` only.
+- New view `views/source_data.py`: dataset selectbox, bundled/uploaded source indicator, per-table `st.dataframe`, per-table CSV download button; Dependency Map split into Nodes/Edges tabs.
+- `main.py`: added `"Source Data"` to `VIEW_NAMES` and the dispatch block.
+- Updated documentation: `requirements.md` (new FR-11.1–FR-11.4), `frontend-components.md` (component tree, frame table, test-key table, story coverage), `business-rules.md` (new BR-P13 section, story coverage row), `aidlc-state.md` (Post-Approval Change log entry).
+- Added 7 new tests to `test_frames.py` asserting row counts/columns for each new frame; extended `test_smoke_views.py`'s `VIEWS` tuple to include the new view (reuses existing per-view render loop, no new test function needed).
+
+**Verification**: ran full test suite from `.venv` — 82/82 tests pass (was 75; +7 new frame tests). `get_diagnostics` clean on all touched files.
+
+**Context**: Post-approval enhancement to `presentation-app`, implemented without reopening Application Design or Units Generation gates. Construction phase Build and Test gate (from the original scope) remains separately awaiting the user's approval.
+
+
+---
+
+## Scenario Compare — Distribution Table + Configuration Comparison
+**Timestamp**: 2026-08-19T00:00:00Z
+**User Input**: "I want to make another change, on scenario compare screen, currently the distribution appears as json, it should be a table, and I also want to show what scroring and details are selected for each scenario for a better comparison context."
+
+**AI Response**: Checked memory graph per hook instruction — no new relevant entries beyond previously stored preferences (minimal comments, memory scope rule), which remain in effect and are not directly relevant to this UI-only change.
+
+Read `views/scenario_compare.py`, `service.py` (`compare()`, `ScenarioDiff`), `models.py` (`Scenario`, `ScoringConfig`, `WaveConfig`), and `stories.md` S7.1 acceptance criteria before implementing. Confirmed the "JSON" the user saw was `st.write({category.value: n for ...})` — a Python dict, rendered by Streamlit as JSON-like text — and that no existing UI exposed each scenario's saved `ScoringConfig`/`WaveConfig` values side by side.
+
+Treated as a small, well-scoped UI fix plus enhancement to the already-approved `presentation-app` unit — no new component boundary, no engine change, no new gate reopened.
+
+**Implementation**:
+- `frames.py` — 2 new pure functions: `distribution_frame(diff)` and `scenario_config_frame(left, right)`.
+- `views/scenario_compare.py` — dict/JSON distribution display replaced with `st.dataframe(frames.distribution_frame(diff))`; new "Scenario Configuration" table added above it via `frames.scenario_config_frame`, showing all 9 adjustable parameters (6 scoring + 3 wave) for both scenarios.
+- Updated `frontend-components.md` (frame table, component tree, test-key table) and `business-rules.md` (BR-P7.9, BR-P7.10, story coverage) and `aidlc-state.md` (Post-Approval Change log).
+- Added 2 new tests to `test_frames.py` reusing the existing `Scenario`/`compare()` pattern from `tests/engine/test_service.py`.
+
+**Verification**: ran full test suite — 84/84 pass (was 82; +2 new). `get_diagnostics` clean on all touched files.
+
+**Context**: Post-approval enhancement to `presentation-app`, implemented without reopening Application Design or Units Generation gates.
+
+
+---
+
+## Bug Report — Scenario Config Table Arrow Serialization Error
+**Timestamp**: 2026-08-19T00:00:00Z
+**User Input**: "that works well but i notice following error in execution logs:2026-08-19 20:51:31.370 Serialization of dataframe to Arrow table was unsuccessful. Applying automatic fixes for column types to make the dataframe Arrow-compatible.Traceback ... pyarrow.lib.ArrowInvalid: ('Could not convert datetime.date(2027, 1, 1) with type datetime.date: tried to convert to int64', 'Conversion failed for column asd with type object')"
+
+**AI Response**: Checked memory graph per hook instruction — no new relevant entries; existing preferences remain in effect and are not directly relevant to this bug fix.
+
+**Root cause diagnosed**: `scenario_config_frame` (added in the prior change) lays out one row per parameter, so the per-scenario column mixes `int` values (thresholds, day/execution counts) with a `datetime.date` value (`start_date`) across different rows of the same column. Pandas stores this as `object` dtype; PyArrow cannot infer one Arrow type spanning both `int` and `date` and raises `ArrowInvalid`. Streamlit's own automatic-fix fallback (visible in the log) could not resolve it because the column is genuinely heterogeneous, not merely mistyped.
+
+**Fix applied**: every value written into `scenario_config_frame` rows is now passed through `str()` before insertion — the table is display-only, not an export, so this has no functional downside and matches the existing `derivation_frame` convention of a separate `raw_display: str` field for on-screen values.
+
+Added a direct regression test (`test_scenario_config_frame_is_arrow_serialisable`) that calls `pyarrow.Table.from_pandas()` on the frame — reproduces the exact failure against the pre-fix code and passes against the fix.
+
+**Verification**: ran full test suite — 85/85 pass (was 84; +1 regression test). `get_diagnostics` clean.
+
+**Context**: Bug fix to the post-approval Scenario Compare enhancement; no gate reopened.
+
+## Change Request — Frontend Design Improvement + Colour Theme (Menu Colours)
+**Timestamp**: 2026-08-19T00:00:00Z
+**User Input**: "using AI-DLC, I want to improve the design of my frontend application, and also update the color theme as the menu colors looks quite weird compared to the overall application design and colors"
+**AI Response**: Memory tools were requested by the `check-memory-first` hook but are not available in this session; proceeded with `aidlc-docs/aidlc-state.md` as the authoritative record of prior decisions. Previously stored preferences already captured in state (minimal code comments; rationale lives in aidlc-docs; project detail stays out of the memory graph) remain in effect and were applied.
+
+**Session resumption**: read `aidlc-state.md`. Project = BW-ACE, phase = 🟢 CONSTRUCTION, Build and Test complete and awaiting the final approval gate. Six post-approval iterations to `presentation-app` already recorded, three of them colour/theme related. Loaded the presentation-app functional design (`business-rules.md` BR-P1 palette rules) and the current code: `theme.py`, `main.py`, `widgets.py`, `charts.py`, `views/dashboard.py`, `.streamlit/config.toml`.
+
+**Root cause diagnosed for the "weird menu colours" — verified, not assumed**:
+`.streamlit/config.toml` contains only a `[client]` block and **no `[theme]` block**. Confirmed empirically: `streamlit.config.get_option("theme.primaryColor")` returns `None` on the installed streamlit 1.61.1, and `#ff4b4b` (`red70`) is present in Streamlit's bundled front-end palette as the built-in default primary. Consequence: every *native* widget accent — the selected dot of the sidebar `st.radio` navigation, slider handles and filled tracks, checkbox fills, focus rings — renders in **Streamlit red `#FF4B4B`**, while the application's own injected CSS paints everything around it in the blue/green palette (`#0050e6`, `#001d6c`, `#eef4ff`). The three prior restyle iterations all changed `theme.py`'s injected CSS, which cannot reach these native widget accents; that is why the menu still looked out of place after them.
+
+**Secondary design observations recorded from the code** (to be offered as options, not assumed): metric/dataframe cards get a white fill but no border, radius, or padding; `app_background` is a flat mid-grey `#e8e8e8`; `warm_neutral` is now byte-identical to `app_background`, so the guard-rule badge lost the warm tint BR-P1 designed for it; `PALETTE["header"].permitted_uses` still advertises `"fill"` although the third iteration removed its last fill use; `h1/h2/h3` and the interactive accent are both `#0050e6`, so blue signals "heading" and "clickable" simultaneously; the Dashboard is a single long scroll of five stacked sections; chart titles are set inside Plotly on some views and via `st.subheader` on others.
+
+**Stage decision**: Requirements Analysis at **Standard depth**. Request type = Enhancement; scope = single unit (`presentation-app`, components C11-C16); complexity = Moderate. The colour-theme half is precisely diagnosed, but "improve the design of my frontend application" is underspecified on scope, visual direction, and layout, so a clarification round is required before any code changes — the same treatment given to the Source Data View addition.
+**Action taken**: created `aidlc-docs/inception/requirements/frontend-design-refresh-questions.md` with 10 questions. Gate: awaiting user answers, no code modified.
+**Context**: INCEPTION — Requirements Analysis (Standard depth) for a post-approval change request against the completed `presentation-app` unit.
+
+---
+
+## Frontend Design Refresh — Answers Received and Implemented
+**Timestamp**: 2026-08-19T00:00:00Z
+**User Input**: "I've answered all questions"
+**AI Response**: Memory tools requested by the `check-memory-first` hook remain unavailable in this session; `aidlc-docs/aidlc-state.md` was used as the authoritative record of prior decisions, and the previously stored preference for minimal code comments with rationale in aidlc-docs was applied throughout.
+
+Read `frontend-design-refresh-questions.md`. Answers: **Q1=A, Q2=A, Q3=A→B, Q4=A, Q5=A, Q6=A, Q7=A, Q8=A, Q9=A, Q10=A** (Q3=B, all others A). Ran the mandatory contradiction check: Q3=B (chrome polish plus layout refinement) pairs consistently with Q10=A (post-approval implementation, no gate reopened), which is the pairing flagged as needing to agree. No contradictions or ambiguities found, so no clarification round was raised.
+
+**Gate handling**: Q10=A is an explicit user selection of the execution path — "implement directly as a post-approval change to presentation-app, then update the functional-design documents and state, and rerun the full test suite" — matching the treatment of all six prior post-approval iterations. Treated as the recorded authorisation for this change's Requirements Analysis approval gate, and implementation proceeded in the same turn. Requirements were documented as part of the work rather than ahead of a second gate.
+
+**Verified before choosing any value**: built a WCAG contrast checker, validated it against all five known anchors (black-on-white 21.000, identical 1.000, `#767676`-on-white 4.542, `#595959`-on-white 7.005, red-on-white 3.998 — all exact), then computed every candidate pair. No hex was selected on estimate. Also verified empirically that Streamlit 1.61.1 exposes a far larger theme config surface than assumed, including a full `[theme.sidebar]` namespace, and confirmed the fix end-to-end by calling Streamlit's own `_populate_theme_msg` and reading the `CustomThemeConfig` protobuf delivered to the browser.
+
+**Implementation**:
+- `.streamlit/config.toml` — new `[theme]` and `[theme.sidebar]` blocks. Root cause of the red widget accents removed at source. `theme.font` deliberately omitted (cannot express NFR-3.2's fallback stack); documented deviation from the letter of Q1=A.
+- `theme.py` rewritten — 14 contrast-verified palette roles. `header`/`heading` consolidated into `ink` and `header_text` renamed `text_on_accent`, because Q5=A had made `header` and `heading` byte-identical, which would have recreated the very duplicate-hex defect Q8=A asked to fix. `warm_neutral` restored to a real sand tint. CSS extracted into `_css()`; menu row styling, card treatment, heading colour, sidebar captions.
+- `charts.py` rewritten — all Plotly titles removed in favour of `st.subheader` (also fixing a double title on the heatmap), new `_style_axes` helper, heatmap scale re-pointed from the retired `heading` to `accent` (same hex, correct semantics), DMK annotation date derived from the argument instead of hardcoded.
+- `widgets.py` — `page_header` and `sidebar_section` added; guard badge commented against BR-P1.8.
+- `main.py` — sidebar split into Navigation / Scoring / Data blocks; exports handed to `dashboard.render`; two now-unused imports dropped.
+- All six views — consistent page headers, subheader section titles, dividers.
+- `tests/app/test_theme_contrast.py` rewritten, 8 → 12 tests. My first version of the new duplicate-hex invariant was too strict and failed on the legitimate `#ffffff` card/text-on-accent pair; the test was wrong, not the palette, and was scoped to overlapping permitted uses.
+
+**Documentation drift found**: `requirements.md` NFR-4.1 and §3.4.1 still described the original green palette four iterations after it was replaced, because the earlier restyles updated `business-rules.md` only. NFR-4.1 marked superseded, live palette recorded in new NFR-4.1a with verified table §3.4.2, green table retained as historical. BR-P3.1/BR-P3.2 also still claimed five navigation options after Source Data made it six; corrected.
+
+**Accepted residual, recorded not hidden**: two hex literals remain in `charts.py` (`#666666` threshold lines, `#9c4f1f` DMK freeze line), a technical breach of BR-P1.4a. Q9=B offered to convert them; the user chose Q9=A, which scoped chart work to backgrounds, gridlines and axis text. Logged under BR-P1.4 for a future round rather than silently overriding the answer.
+
+**Limits of verification, stated to the user**: `AppTest` exercises the Python render path only — it evaluates no CSS and does not apply the `[theme]` block, so the menu row styling and card treatment cannot be asserted automatically and need visual confirmation in a browser.
+
+**Verification**: full suite 89/89 pass (was 85; +4 net new theme tests). `get_diagnostics` clean on all 11 touched source and test files. Headless `streamlit run` on port 8790 booted clean with HTTP 200 and no config warnings; server stopped and the throwaway contrast script deleted afterwards.
+**Context**: 🟢 CONSTRUCTION — seventh post-approval change to `presentation-app`, implemented under Q10=A without reopening Application Design, Units Generation, or Unit 2 Functional Design gates. Build and Test approval remains the outstanding gate.
+
+---

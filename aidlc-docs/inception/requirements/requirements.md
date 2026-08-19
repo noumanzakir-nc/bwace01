@@ -185,6 +185,36 @@ Low business value means decommission regardless of technical effort. Among obje
 
 **Decision reference**: Q22 = D (what-if comparison included).
 
+### 2.6.5 Source Data view (post-approval addition, 2026-08-19)
+
+| ID | Requirement | Priority |
+|---|---|---|
+| FR-11.1 | The system shall provide a view that displays all six raw source datasets exactly as loaded (bundled or uploaded), independent of scoring configuration. | Must |
+| FR-11.2 | The view shall let the user select which dataset to display; the Dependency Map dataset shall present its nodes and edges as separate tables. | Must |
+| FR-11.3 | The view shall indicate whether the displayed dataset is the bundled demo data or a user-uploaded replacement. | Should |
+| FR-11.4 | The view shall provide a per-table "Download as CSV" button for the currently displayed table. | Should |
+
+**Decision reference**: source-data-view-questions.md — Q1=A (all six datasets), Q2=A (new sidebar nav entry), Q3=A (plain read-only table per dataset), Q4=A (no search/filter), Q5=B (per-dataset CSV download).
+
+**Rationale**: requested directly by the user as a follow-up enhancement after Build and Test. Treated as a small, well-scoped addition to the already-approved `presentation-app` unit — no new component boundary, no scoring logic, no change to `AssessmentResult`. Read-only and stateless, so it carries no risk to the existing NFR-8.1 engine/presentation separation.
+
+### 2.6.6 Interface presentation and navigation (post-approval refresh, 2026-08-19)
+
+| ID | Requirement | Priority |
+|---|---|---|
+| FR-12.1 | Native Streamlit widget accents (selection indicators, slider handles and tracks, focus rings) shall use the application accent colour, not the framework default. | Must |
+| FR-12.2 | The sidebar navigation shall present as a menu: one full-width row per view, with a hover state and a visually distinct selected row. | Must |
+| FR-12.3 | The sidebar shall separate navigation, global scoring controls, and data sources into visually distinct labelled blocks. | Should |
+| FR-12.4 | Every view shall open with a consistent page header comprising the view name and a one-line description of the view's purpose. | Should |
+| FR-12.5 | Metrics, tables, and charts shall render as bordered card surfaces distinguishable from the page background. | Should |
+| FR-12.6 | Section titles shall be rendered by the application uniformly, whether the section contains a chart, a table, or text. No chart shall carry its own internal title. | Should |
+| FR-12.7 | The Dashboard export controls shall be reachable without scrolling past the analytical content. | Should |
+| FR-12.8 | Chart interiors, gridlines, and axis text shall use the application palette so charts read as part of the app. Data colours remain governed by NFR-4.4. | Should |
+
+**Decision reference**: frontend-design-refresh-questions.md — Q1 = A (native `[theme]` block), Q2 = A (styled radio menu), Q3 = B (chrome polish plus layout refinement), Q4 = A (lighter background, bordered cards), Q5 = A (navy headings, accent reserved for interaction), Q6 = A (single scroll, exports moved up), Q7 = A (sidebar blocks), Q8 = A (palette hygiene), Q9 = A (chart styling aligned), Q10 = A (post-approval implementation).
+
+**Rationale**: requested directly by the user after Build and Test. FR-12.1 addresses a defect rather than a preference — with no `[theme]` block in `.streamlit/config.toml`, Streamlit applied its built-in `#ff4b4b` primary to every native widget accent, which is what made the navigation look wrong against the blue palette. Three earlier restyle rounds failed to fix it because they only changed the CSS injected by `theme.py`, which cannot reach native widget accents. No component boundary, no scoring logic, and no change to `AssessmentResult` is involved.
+
 ### 2.7 Outputs
 
 | ID | Requirement | Priority |
@@ -234,20 +264,24 @@ Low business value means decommission regardless of technical effort. Among obje
 
 | ID | Requirement |
 |---|---|
-| NFR-4.1 | The application shall use a light theme: `#f2f7f1` application background, `#ffffff` cards, `#02462f` dark-green header and sidebar with white text, `#0d6a4b` for headings and emphasis, `#82ce71` restricted to chart accents and highlights, `#f6eeee` as a warm neutral for decommission and warning callouts. |
+| NFR-4.1 | **Superseded — see NFR-4.1a.** Original: the application shall use a light theme: `#f2f7f1` application background, `#ffffff` cards, `#02462f` dark-green header and sidebar with white text, `#0d6a4b` for headings and emphasis, `#82ce71` restricted to chart accents and highlights, `#f6eeee` as a warm neutral for decommission and warning callouts. |
+| NFR-4.1a | The application shall use a light theme built on the chrome palette recorded in §3.4.2: `#f4f6fa` application background, `#ffffff` cards with a `#d0d7e6` border, `#eef4ff` sidebar, `#001d6c` for headings and body text, `#0050e6` reserved exclusively for interactive elements, `#f9ecd9` as a warm neutral for guard-rule and warning callouts. |
 | NFR-4.2 | All text and background colour combinations shall meet WCAG 2.1 AA contrast (4.5:1 for normal text, 3:1 for large text). |
 | NFR-4.3 | `#82ce71` shall never be used for text on white or light backgrounds. |
-| NFR-4.4 | Classification categories shall be colour-coded as: Rebuild as Data Product `#02462f`, Replicate As-Is `#82ce71`, Decommission a muted terracotta harmonising with `#f6eeee`. |
+| NFR-4.4 | Classification categories shall be colour-coded as: Rebuild as Data Product `#02462f`, Replicate As-Is `#82ce71`, Decommission a muted terracotta (`#9c4f1f`, fixed in Unit 2 Functional Design). |
 | NFR-4.5 | Classification shall never be conveyed by colour alone; every colour-coded element shall carry a text label or icon. |
 | NFR-4.6 | Charts shall have accessible labels, legends, and hover text. |
+| NFR-4.7 | A single colour shall carry a single meaning. No hex value shall be used for two roles whose permitted uses overlap, and the interactive accent shall not double as a heading or body-text colour. |
 
-**Decision reference**: Q13 = A (light theme), Q14 = A (palette-derived classification colours), Q15 = B (web font with fallback per NFR-3.2).
+**Decision reference**: Q13 = A (light theme), Q14 = A (palette-derived classification colours), Q15 = B (web font with fallback per NFR-3.2). NFR-4.1a and NFR-4.7 from frontend-design-refresh-questions.md Q4 = A, Q5 = A, Q8 = A.
 
-#### 3.4.1 Verified contrast ratios
+**Documentation-drift correction, 2026-08-19**: NFR-4.1 and the original §3.4.1 table below still described the **first** green palette (`#f2f7f1`, `#02462f`, `#0d6a4b`) long after three restyle rounds had replaced it. Those rounds updated `business-rules.md` BR-P1 but never this document, so the two disagreed for four iterations. NFR-4.1 is now explicitly marked superseded rather than silently edited, and the live palette is stated in NFR-4.1a with its own verified table in §3.4.2. NFR-4.2 to NFR-4.6 were always palette-independent and are unchanged.
 
-Measured against WCAG 2.1 AA.
+#### 3.4.1 Verified contrast ratios — original green palette (historical)
 
-**Figures corrected 2026-08-18** during Unit 2 Functional Design, when the ratios were computed programmatically for the first time (checker validated against five known WCAG anchor values: black-on-white 21:1, identical-colour 1:1, `#767676`-on-white 4.54:1, `#595959`-on-white 7.00:1, red-on-white 3.998:1 — all matched exactly). The original figures in this table were hand-estimated and were off by up to 0.5. **Every verdict is unchanged**; two combinations are in fact better than first recorded.
+Retained for traceability. **These colours are no longer in the application.** Measured against WCAG 2.1 AA.
+
+**Figures corrected 2026-08-18** during Unit 2 Functional Design, when the ratios were computed programmatically for the first time (checker validated against five known WCAG anchor values: black-on-white 21:1, identical-colour 1:1, `#767676`-on-white 4.54:1, `#595959`-on-white 7.00:1, red-on-white 3.998:1 — all matched exactly). The original figures in this table were hand-estimated and were off by up to 0.5. **Every verdict was unchanged**; two combinations proved better than first recorded.
 
 | Foreground | Background | Ratio | Verdict |
 |---|---|---|---|
@@ -264,7 +298,30 @@ Measured against WCAG 2.1 AA.
 | `#9c4f1f` | `#f6eeee` | 5.18:1 | Pass (AA) — on the warm neutral callout background |
 | `#ffffff` | `#9c4f1f` | 5.91:1 | Pass (AA) — white text on the Decommission colour |
 
-`#82ce71` remains valid as a chart fill, a border, or a highlight block, and as text only on the dark green background.
+#### 3.4.2 Verified contrast ratios — live palette
+
+Computed 2026-08-19 with the same checker, re-validated against all five WCAG anchors before use. The full role table lives in `business-rules.md` BR-P1.7a; this records the AA verdicts that NFR-4.2 depends on.
+
+| Foreground | Background | Ratio | Verdict |
+|---|---|---|---|
+| `#001d6c` ink | `#f4f6fa` app background | 13.94:1 | Pass (AAA) |
+| `#001d6c` ink | `#ffffff` card | 15.08:1 | Pass (AAA) |
+| `#001d6c` ink | `#eef4ff` sidebar | 13.66:1 | Pass (AAA) |
+| `#001d6c` ink | `#dce7ff` sidebar hover | 12.15:1 | Pass (AAA) |
+| `#4c5a72` ink muted | `#ffffff` card | 6.97:1 | Pass (AA) |
+| `#4c5a72` ink muted | `#f4f6fa` app background | 6.44:1 | Pass (AA) |
+| `#0050e6` accent | `#ffffff` card | 6.38:1 | Pass (AA) |
+| `#0050e6` accent | `#f4f6fa` app background | 5.90:1 | Pass (AA) |
+| `#0050e6` accent | `#eef4ff` sidebar | 5.78:1 | Pass (AA) |
+| `#ffffff` | `#0050e6` accent fill (selected menu row) | 6.38:1 | Pass (AA) |
+| `#02462f` Rebuild | `#f4f6fa` app background | 10.11:1 | Pass (AAA) |
+| `#02462f` Rebuild | `#82ce71` Replicate fill | 5.74:1 | Pass (AA) |
+| `#9c4f1f` Decommission | `#f4f6fa` app background | 5.46:1 | Pass (AA) |
+| `#9c4f1f` Decommission | `#f9ecd9` warm neutral | 5.08:1 | Pass (AA) — guard badge |
+| `#ffffff` | `#9c4f1f` Decommission fill | 5.91:1 | Pass (AA) |
+| `#82ce71` Replicate | `#ffffff` card | 1.91:1 | **Fail** — prohibited for text (NFR-4.3) |
+
+`#82ce71` remains valid as a chart fill, a border, or a highlight block, and as text only on the dark green `#02462f`.
 
 ### 3.5 Performance
 

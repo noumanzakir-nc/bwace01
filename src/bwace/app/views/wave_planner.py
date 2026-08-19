@@ -8,19 +8,28 @@ from bwace.app import charts, frames, widgets
 
 
 def render(result: AssessmentResult, landscape) -> WaveConfig:
-    st.header("Wave Planner")
+    widgets.page_header(
+        "Wave Planner",
+        "Sequenced migration waves derived from solution-area priority, with risk and dependency checks.",
+    )
 
+    st.subheader("Wave Configuration")
     new_wave_config = widgets.wave_controls(result.wave_config)
 
+    st.divider()
+    st.subheader("Migration Wave Timeline")
     gantt_df = frames.gantt_frame(result.wave_plan)
     st.plotly_chart(charts.wave_gantt(gantt_df, _dmk_freeze()), width='stretch')
 
+    st.divider()
     st.subheader("Wave Assignments")
     st.dataframe(
-        gantt_df[["wave_label", "start_date", "end_date", "object_count", "areas", "risk_band"]],
+        gantt_df[["wave_label", "start_date", "end_date", "object_count", "areas", "risk_band_label"]]
+        .rename(columns={"risk_band_label": "risk_band"}),
         hide_index=True,
     )
 
+    st.divider()
     st.subheader("Risk Breakdown")
     risk_rows = []
     for wave in result.wave_plan.waves:
@@ -35,6 +44,7 @@ def render(result: AssessmentResult, landscape) -> WaveConfig:
         })
     st.dataframe(risk_rows, hide_index=True)
 
+    st.divider()
     st.subheader(f"Dependency Violations ({len(result.wave_plan.violations)})")
     if result.wave_plan.violations:
         for v in result.wave_plan.violations:

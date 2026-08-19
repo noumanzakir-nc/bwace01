@@ -4,14 +4,13 @@ from __future__ import annotations
 import streamlit as st
 
 from bwace.engine.config import DEFAULT_SCORING, DEFAULT_WAVES
-from bwace.engine.export import classification_csv, wave_recommendation_json
 from bwace.engine.loader import DATASET_FILES, load_bundled, load_with_overrides
 from bwace.engine.models import ValidationReport
 from bwace.engine.service import apply_config, compute_base
 from bwace.app import theme, widgets
-from bwace.app.views import dashboard, dependency_view, object_detail, scenario_compare, wave_planner
+from bwace.app.views import dashboard, dependency_view, object_detail, scenario_compare, source_data, wave_planner
 
-VIEW_NAMES = ("Dashboard", "Object Detail", "Dependencies", "Wave Planner", "Scenario Compare")
+VIEW_NAMES = ("Dashboard", "Object Detail", "Dependencies", "Wave Planner", "Scenario Compare", "Source Data")
 
 DATASET_LABELS = {
     "object_inventory": "Object Inventory",
@@ -59,11 +58,18 @@ def _cached_compute_base(fingerprint: str, _landscape):
 def _render_sidebar() -> None:
     with st.sidebar:
         st.title("BW-ACE")
+
+        # Three distinct blocks: navigation, global scoring controls, data
+        # sources. The thresholds affect every view, so they stay global; the
+        # dividers stop them reading as part of the menu.
+        st.caption("Navigation")
         st.session_state["active_view"] = st.radio(
             "View", VIEW_NAMES, key="sidebar-view-nav",
             index=VIEW_NAMES.index(st.session_state["active_view"]),
+            label_visibility="collapsed",
         )
 
+        widgets.sidebar_section("Scoring")
         new_scoring = widgets.scoring_controls(st.session_state["scoring_config"])
         st.session_state["scoring_config"] = new_scoring
 
@@ -71,6 +77,7 @@ def _render_sidebar() -> None:
             st.session_state["scoring_config"] = DEFAULT_SCORING
             st.rerun()
 
+        widgets.sidebar_section("Data")
         with st.expander("Data Sources"):
             for name in DATASET_FILES:
                 label = DATASET_LABELS[name]
@@ -108,19 +115,9 @@ def main() -> None:
 
         active_view = st.session_state["active_view"]
         if active_view == "Dashboard":
+            # Exports live inside the Dashboard view, directly under the KPI
+            # strip, rather than below the full scroll where they were missable.
             dashboard.render(result, landscape)
-            col1, col2 = st.columns(2)
-            with col1:
-                st.download_button(
-                    "Download Classification CSV", classification_csv(result),
-                    file_name="classification_report.csv", key="export-classification-csv",
-                )
-            with col2:
-                import json
-                st.download_button(
-                    "Download Wave Plan JSON", json.dumps(wave_recommendation_json(result), indent=2),
-                    file_name="wave_recommendation.json", key="export-wave-json",
-                )
         elif active_view == "Object Detail":
             object_detail.render(result, landscape)
         elif active_view == "Dependencies":
@@ -130,6 +127,8 @@ def main() -> None:
             st.session_state["wave_config"] = new_wave_config
         elif active_view == "Scenario Compare":
             scenario_compare.render(landscape)
+        elif active_view == "Source Data":
+            source_data.render(landscape)
 
     except Exception as exc:  # noqa: BLE001 - top-level boundary, must not leak a traceback
         st.error(f"Something went wrong: {exc}")

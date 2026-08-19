@@ -2,7 +2,7 @@ from pathlib import Path
 
 from streamlit.testing.v1 import AppTest
 
-VIEWS = ("Dashboard", "Object Detail", "Dependencies", "Wave Planner", "Scenario Compare")
+VIEWS = ("Dashboard", "Object Detail", "Dependencies", "Wave Planner", "Scenario Compare", "Source Data")
 
 _MAIN_PY = Path(__file__).resolve().parents[2] / "src" / "bwace" / "app" / "main.py"
 

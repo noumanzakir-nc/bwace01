@@ -1,0 +1,36 @@
+[client]
+# Hides the Settings menu's light/dark theme switcher. The app renders a single,
+# fixed custom theme; Streamlit's built-in dark theme only recolours native
+# widgets, not the CSS injected by theme.py, which produced a broken,
+# half-dark/half-light result when toggled. See business-rules.md BR-P1.6.
+toolbarMode = "minimal"
+
+# Native widget theming. Without this block Streamlit falls back to its built-in
+# primary #ff4b4b, which is why the nav radio dot, slider handles and focus rings
+# rendered red against the blue palette. Injected CSS cannot reach these; only
+# config can. See business-rules.md BR-P1.7.
+[theme]
+base = "light"
+primaryColor = "#0050e6"
+backgroundColor = "#f4f6fa"
+secondaryBackgroundColor = "#ffffff"
+textColor = "#001d6c"
+linkColor = "#0050e6"
+borderColor = "#d0d7e6"
+dataframeBorderColor = "#d0d7e6"
+dataframeHeaderBackgroundColor = "#eef4ff"
+showWidgetBorder = true
+showSidebarBorder = true
+baseRadius = "medium"
+
+# theme.font is deliberately unset. It accepts only a generic family, a
+# [[theme.fontFaces]] name, or a "name:url" pair — not a fallback stack. NFR-3.2
+# requires the full system-font chain so offline use degrades gracefully, so
+# typography stays owned by the CSS in theme.py. See business-rules.md BR-P1.7.
+
+[theme.sidebar]
+backgroundColor = "#eef4ff"
+secondaryBackgroundColor = "#ffffff"
+textColor = "#001d6c"
+primaryColor = "#0050e6"
+borderColor = "#d0d7e6"

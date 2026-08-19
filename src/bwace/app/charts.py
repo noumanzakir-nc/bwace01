@@ -1,4 +1,9 @@
-"""Plotly figure construction. See business-rules.md BR-P6."""
+"""Plotly figure construction. See business-rules.md BR-P6.
+
+Chart titles are deliberately absent. Every chart is titled by the calling view
+with st.subheader, so section titles look identical whether they head a chart, a
+table or a text block (BR-P6.13).
+"""
 from __future__ import annotations
 
 from datetime import date
@@ -10,10 +15,11 @@ from bwace.engine.models import Category, DependencyGraph, Determinant, NodeType
 from bwace.app.theme import FONT_STACK, category_style, palette
 
 _LAYOUT_TEMPLATE = dict(
-    font=dict(family=FONT_STACK, size=13),
-    margin=dict(l=40, r=20, t=40, b=40),
-    plot_bgcolor="#ffffff",
-    paper_bgcolor="#ffffff",
+    font=dict(family=FONT_STACK, size=13, color=palette()["ink"].hex),
+    margin=dict(l=40, r=20, t=20, b=40),
+    plot_bgcolor=palette()["card"].hex,
+    paper_bgcolor=palette()["card"].hex,
+    legend=dict(font=dict(color=palette()["ink"].hex)),
 )
 
 _NODE_TYPE_SYMBOL = {
@@ -33,6 +39,17 @@ _NODE_TYPE_LABEL = {
 }
 
 
+def _style_axes(fig: go.Figure) -> go.Figure:
+    grid, border = palette()["gridline"].hex, palette()["card_border"].hex
+    ink, ink_muted = palette()["ink"].hex, palette()["ink_muted"].hex
+    for axis in (fig.update_xaxes, fig.update_yaxes):
+        axis(
+            gridcolor=grid, zerolinecolor=grid, linecolor=border,
+            tickfont=dict(color=ink_muted), title_font=dict(color=ink),
+        )
+    return fig
+
+
 def classification_donut(frame: pd.DataFrame) -> go.Figure:
     counts = frame["category"].value_counts()
     labels = [category_style(c).label for c in counts.index]
@@ -41,9 +58,13 @@ def classification_donut(frame: pd.DataFrame) -> go.Figure:
     fig = go.Figure(data=[go.Pie(
         labels=labels, values=counts.values, hole=0.5,
         marker=dict(colors=colours), text=text, textinfo="text",
+        textposition="inside", insidetextorientation="radial",
         hovertemplate="%{label}: %{value} objects<extra></extra>",
     )])
-    fig.update_layout(**_LAYOUT_TEMPLATE, title="Classification Summary", showlegend=True)
+    # Wider top/bottom margins than the shared template keep radial labels
+    # inside the chart card (BR-P6.12).
+    layout = {**_LAYOUT_TEMPLATE, "margin": dict(l=20, r=20, t=40, b=40)}
+    fig.update_layout(**layout, showlegend=True)
     return fig
 
 
@@ -54,11 +75,8 @@ def top_value_bar(frame: pd.DataFrame, limit: int = 10) -> go.Figure:
         x=top["object_id"], y=top["business_value"], marker_color=colours,
         text=top["category_label"], hovertemplate="%{x}: Value %{y:.1f}<br>%{text}<extra></extra>",
     )])
-    fig.update_layout(
-        **_LAYOUT_TEMPLATE, title=f"Top {limit} Objects by Business Value",
-        xaxis_title="Object", yaxis_title="Business Value",
-    )
-    return fig
+    fig.update_layout(**_LAYOUT_TEMPLATE, xaxis_title="Object", yaxis_title="Business Value")
+    return _style_axes(fig)
 
 
 def quadrant_scatter(frame: pd.DataFrame, cfg: ScoringConfig) -> go.Figure:
@@ -85,28 +103,21 @@ def quadrant_scatter(frame: pd.DataFrame, cfg: ScoringConfig) -> go.Figure:
                   annotation_text=f"Value threshold ({cfg.value_threshold})")
     fig.add_vline(x=cfg.effort_threshold, line_dash="dash", line_color="#666666",
                   annotation_text=f"Effort threshold ({cfg.effort_threshold})")
-    fig.update_layout(
-        **_LAYOUT_TEMPLATE, title="Business Value vs Technical Effort",
-        xaxis_title="Technical Effort", yaxis_title="Business Value",
-    )
-    return fig
+    fig.update_layout(**_LAYOUT_TEMPLATE, xaxis_title="Technical Effort", yaxis_title="Business Value")
+    return _style_axes(fig)
 
 
 def dependency_heatmap(graph: DependencyGraph, heatmap_df: pd.DataFrame) -> go.Figure:
-    labels = [n.label for n in graph.nodes if n.node_id in graph.area_order]
     label_order = [next(n.label for n in graph.nodes if n.node_id == area_id) for area_id in graph.area_order]
     pivot = heatmap_df.pivot(index="source_area", columns="target_area", values="value")
     pivot = pivot.reindex(index=label_order, columns=label_order)
     fig = go.Figure(data=go.Heatmap(
         z=pivot.values, x=pivot.columns, y=pivot.index,
-        colorscale=[[0, "#ffffff"], [1, "#02462f"]],
+        colorscale=[[0, palette()["card"].hex], [1, palette()["accent"].hex]],
         hovertemplate="%{y} -> %{x}: %{z}<extra></extra>",
     ))
-    fig.update_layout(
-        **_LAYOUT_TEMPLATE, title="Dependency Matrix",
-        xaxis_title="Depends on", yaxis_title="Solution area",
-    )
-    return fig
+    fig.update_layout(**_LAYOUT_TEMPLATE, xaxis_title="Depends on", yaxis_title="Solution area")
+    return _style_axes(fig)
 
 
 def dependency_network(graph: DependencyGraph) -> go.Figure:
@@ -120,7 +131,8 @@ def dependency_network(graph: DependencyGraph) -> go.Figure:
         x_edges += [x0, x1, None]
         y_edges += [y0, y1, None]
     fig.add_trace(go.Scatter(
-        x=x_edges, y=y_edges, mode="lines", line=dict(width=1, color="#999999"),
+        x=x_edges, y=y_edges, mode="lines",
+        line=dict(width=1, color=palette()["card_border"].hex),
         hoverinfo="skip", showlegend=False,
     ))
 
@@ -133,13 +145,13 @@ def dependency_network(graph: DependencyGraph) -> go.Figure:
         labels = [n.label for n in nodes]
         fig.add_trace(go.Scatter(
             x=xs, y=ys, mode="markers+text", text=labels, textposition="top center",
-            marker=dict(symbol=_NODE_TYPE_SYMBOL[node_type], size=16, color=palette()["header"].hex),
+            marker=dict(symbol=_NODE_TYPE_SYMBOL[node_type], size=16, color=palette()["ink"].hex),
             name=_NODE_TYPE_LABEL[node_type],
             hovertemplate="%{text}<extra></extra>",
         ))
 
     fig.update_layout(
-        **_LAYOUT_TEMPLATE, title="Dependency Network",
+        **_LAYOUT_TEMPLATE,
         xaxis=dict(visible=False), yaxis=dict(visible=False), showlegend=True,
     )
     return fig
@@ -159,12 +171,9 @@ def wave_gantt(gantt_df: pd.DataFrame, freeze_until: date) -> go.Figure:
             showlegend=False,
         ))
     fig.add_vline(x=pd.Timestamp(freeze_until), line_dash="dot", line_color="#9c4f1f",
-                  annotation_text="DMK freeze (2028-01-01)")
-    fig.update_layout(
-        **_LAYOUT_TEMPLATE, title="Migration Wave Timeline",
-        xaxis_title="Date", yaxis_title="Wave", barmode="stack",
-    )
-    return fig
+                  annotation_text=f"DMK freeze ({freeze_until})")
+    fig.update_layout(**_LAYOUT_TEMPLATE, xaxis_title="Date", yaxis_title="Wave", barmode="stack")
+    return _style_axes(fig)
 
 
 def _risk_colour_label(band) -> tuple[str, str]:
