@@ -120,6 +120,54 @@ Behaviour worth knowing:
 | `MALFORMED` | Payload shape or a property name differs from the expected mapping | Compare your entity-set properties with the field maps in `src/bwace/engine/odata.py` |
 | Warning about the record cap | A collection is larger than `BWACE_ODATA_MAX_RECORDS` | Raise the cap; the assessment may otherwise be computed over partial data |
 
+## Deploy to Streamlit Community Cloud
+
+The app is ready to deploy on [Streamlit Community Cloud](https://share.streamlit.io/) (free tier).
+
+### Steps
+
+1. Push this repository to a public GitHub repo (or a private repo if you have a paid plan).
+2. Go to [share.streamlit.io](https://share.streamlit.io/) and sign in with your GitHub account.
+3. Click **New app** and select:
+   - **Repository**: your GitHub repo
+   - **Branch**: `main` (or whichever branch you use)
+   - **Main file path**: `src/bwace/app/main.py`
+4. Under **Advanced settings**, set the Python version to **3.11**.
+5. Click **Deploy**.
+
+The app will install its dependencies from `requirements.txt` and start. The bundled demo data ships with the repo, so the app works immediately with no further configuration.
+
+### Secrets (optional — for live OData mode)
+
+If you want live SAP connectivity on the deployed app, open **App settings → Secrets** and paste TOML-formatted credentials:
+
+```toml
+BWACE_ODATA_BASE_URL = "https://sapgw.example.corp:44300"
+BWACE_ODATA_USER = "your_user"
+BWACE_ODATA_PASSWORD = "your_password"
+```
+
+Root-level keys in Streamlit secrets are exposed as environment variables, so the app's existing `os.environ` approach picks them up without code changes. Add any of the optional `BWACE_ODATA_*` variables from `.env.example` as needed.
+
+### Password protection
+
+To restrict access, add an `APP_PASSWORD` secret:
+
+```toml
+APP_PASSWORD = "your_chosen_password"
+```
+
+When set, visitors see a password prompt before the app loads. Leave it unset or blank for open access. For local development, add `APP_PASSWORD=something` to your `.env` file.
+
+### Notes
+
+- The `.python-version` file (containing `3.11`) hints at the target runtime. You can also select the version in the deploy dialog.
+- The `pyproject.toml` at the root is used for local development (`pip install -e .`). Community Cloud uses `requirements.txt` which takes precedence per its dependency resolution order.
+- The free tier has resource limits (1 GB RAM, apps sleep after inactivity). The BW-ACE demo dataset is small (22 objects) and well within these limits.
+- If the app sleeps, the next visitor sees a brief "waking up" spinner before it resumes.
+
+---
+
 ## Unit 2 — presentation app
 
 The Streamlit UI: seven views (Dashboard, Object Detail, Dependencies, Wave Planner, Scenario Compare, Source Data, Connection Settings) driven entirely by Unit 1's `AssessmentResult`.

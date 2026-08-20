@@ -1,5 +1,9 @@
-.kiro
-.vscode
+.kiro/
+.vscode/
+.vs/
+
+aidlc-docs/
+requirements/
 
 __pycache__/
 *.pyc
@@ -14,3 +18,5 @@ dist/
 .env
 .env.*
 !.env.example
+.streamlit/secrets.toml
+

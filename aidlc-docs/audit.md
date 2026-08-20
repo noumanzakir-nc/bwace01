@@ -951,3 +951,75 @@ Recorded approval of `requirements.md` §10. **Workflow override recorded**: Q15
 **Documents updated in place**: engine `business-rules.md` (BR-13, 14 rules), presentation `business-rules.md` (BR-P15, 12 rules), `frontend-components.md` (§12), `components.md` (C17 plus C3 amendment and inventory row), `build-instructions.md`, `unit-test-instructions.md`, `README.md`.
 
 **Context**: CONSTRUCTION - OData connectivity implemented and verified under a user-directed condensed workflow. No open gate.
+
+---
+
+## Post-Approval Change: Streamlit Community Cloud Deployment Readiness
+**Timestamp**: 2026-08-20T00:00:00Z
+**User Input**: "using AI-DLC, help me make this application ready to be deployed to streamlit community cloud. I'll use the free hosting option on streamlit"
+
+**AI Response**: Assessed request against AI-DLC workflow state:
+- Project is fully built: all INCEPTION complete, all CONSTRUCTION complete (Build and Test passed, 133 tests green)
+- This is a well-scoped deployment-readiness task, same treatment as the previous post-approval changes (colour restyle, source data view, sidebar fix, scenario config table, frontend refresh)
+- No new gates opened. Request is clear — no clarification round needed.
+
+**Analysis of what Streamlit Community Cloud requires**:
+1. `requirements.txt` at repo root (Streamlit Cloud does not use pyproject.toml's editable install)
+2. Entry point must be reachable — typically specified during deploy or via a `.streamlit/config.toml` or just the file path in the dashboard
+3. Secrets management: Streamlit Cloud uses `st.secrets` via a web UI, not `.env` files
+4. The `data/` directory with bundled JSON must be included in the repo (already is)
+5. Python version specification (optional `runtime.txt` or `.python-version`)
+6. No `.venv`, no editable install — Cloud does `pip install -r requirements.txt`
+
+**Approach proposed to user**: See chat message.
+
+**Context**: Post-Build-and-Test enhancement — Streamlit Community Cloud deployment readiness
+
+---
+
+## Post-Approval Change: Streamlit Community Cloud — Implementation
+**Timestamp**: 2026-08-20T00:01:00Z
+**User Input**: "use the recommended option"
+
+**AI Response**: Implemented option B (sys.path shim). Changes made:
+
+1. **Created `requirements.txt`** — 5 pinned dependencies (streamlit, pandas, plotly, networkx, httpx) matching pyproject.toml versions exactly. Streamlit Cloud uses this via pip/uv.
+2. **Created `.python-version`** — contains `3.11` (project minimum, confirmed safe on Cloud per docs). Cloud defaults to 3.12/3.13 but respects this file.
+3. **Modified `src/bwace/app/main.py`** — added 5-line sys.path shim before imports. Inserts `src/` onto sys.path so `from bwace.*` resolves without an editable install. Uses `Path(__file__).resolve().parents[2]` which is stable regardless of cwd.
+4. **Updated `README.md`** — new "Deploy to Streamlit Community Cloud" section covering: deploy steps, secrets configuration (TOML format), and notes on free-tier limits.
+5. **Updated `.gitignore`** — added `.streamlit/secrets.toml` (local secrets file for development, must not be committed per Streamlit docs).
+
+**Verification**:
+- 133/133 tests pass (no regression)
+- DATA_DIR in loader.py uses `Path(__file__).resolve().parents[3]` — resolves via __file__ not cwd, works on Cloud
+- `load_env_file()` gracefully returns () when no .env exists (Cloud has no .env)
+- Root-level keys in Streamlit Cloud secrets are exposed as os.environ, so existing `os.environ.get(ODATA_ENV_VARS[...])` picks them up with zero code changes
+- Confirmed via Streamlit docs that `requirements.txt` takes precedence over `pyproject.toml` in their dependency resolution order
+
+**No gate opened** — well-scoped deployment-readiness task, same precedent as previous post-approval changes.
+
+**Context**: Post-Build-and-Test enhancement — complete
+
+---
+
+## Post-Approval Change: Application Password Gate
+**Timestamp**: 2026-08-20T00:02:00Z
+**User Input**: "I want to set a master password, a very simple one which appears when someone try to enter the application. Is it possible to set it on streamlit community cloud free version, or shall we do it on application itself?"
+**User Input (follow-up)**: "Yes please implement"
+
+**AI Response**: Streamlit Community Cloud free tier has no built-in password protection. Implemented an in-app password gate.
+
+**Changes**:
+1. `src/bwace/app/main.py` — added `_check_password()` function at the top of `main()`. Reads `APP_PASSWORD` from `os.environ`. When set, shows a password prompt; when blank/unset, open access. Stores auth state in `st.session_state["authenticated"]`.
+2. `.env.example` — added `APP_PASSWORD=` with documentation comment.
+3. `README.md` — added "Password protection" subsection to the Cloud deployment section.
+
+**Design**:
+- Password read from environment (works with .env locally and Streamlit Cloud secrets)
+- Gate placed before `_init_session_state()` so no data is loaded until authenticated
+- `theme.apply()` called before the gate so the login screen is styled consistently
+- If no APP_PASSWORD is configured, the gate is a no-op (backwards-compatible)
+
+**Verification**: 133/133 tests pass.
+
+**Context**: Post-Build-and-Test enhancement — complete

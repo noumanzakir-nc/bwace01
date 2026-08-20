@@ -1,7 +1,19 @@
 """Streamlit entry point. Sole owner of session state. See business-logic-model.md #1."""
 from __future__ import annotations
 
+import sys
+from pathlib import Path
+
+# Ensure the src/ directory is on sys.path so that `bwace` is importable without
+# an editable pip install. Required for Streamlit Community Cloud, which runs
+# `pip install -r requirements.txt` but does not install the project itself.
+_SRC = str(Path(__file__).resolve().parents[2])
+if _SRC not in sys.path:
+    sys.path.insert(0, _SRC)
+
 import streamlit as st
+
+import os
 
 from bwace.engine import odata
 from bwace.engine.config import DEFAULT_SCORING, DEFAULT_WAVES
@@ -203,8 +215,31 @@ def _render_sidebar() -> None:
                 st.rerun()
 
 
+def _check_password() -> bool:
+    """Gate the app behind a simple password. Returns True if authenticated."""
+    password = os.environ.get("APP_PASSWORD", "")
+    if not password:
+        return True  # No password configured — open access.
+    if st.session_state.get("authenticated"):
+        return True
+    st.title("BW-ACE")
+    st.caption("Enter the application password to continue.")
+    entered = st.text_input("Password", type="password", key="login-password")
+    if st.button("Enter", key="login-submit"):
+        if entered == password:
+            st.session_state["authenticated"] = True
+            st.rerun()
+        else:
+            st.error("Incorrect password.")
+    return False
+
+
 def main() -> None:
     theme.apply()
+
+    if not _check_password():
+        return
+
     _init_session_state()
 
     try:
