@@ -37,7 +37,7 @@ Not applicable — greenfield. Component boundaries will be established during A
 
 **What raises the risk above Low**, despite the technical simplicity:
 
-1. **Customer-facing consequence.** This is presented to Arla. A visibly wrong recommendation — the `IM100` failure mode caught during Requirements Analysis — costs credibility in a way a normal internal bug does not. Correctness of the engine matters more than the codebase size suggests.
+1. **Customer-facing consequence.** This is presented to Acme. A visibly wrong recommendation — the `IM100` failure mode caught during Requirements Analysis — costs credibility in a way a normal internal bug does not. Correctness of the engine matters more than the codebase size suggests.
 2. **pandas 3.x.** The stack resolved to pandas 3.x during verification, a major version whose copy-on-write and string dtype behaviour differs from the 2.x series that most examples assume. Pinning contains it, but it is a genuine unknown rather than a settled quantity.
 3. **Deferred numeric detail.** Requirements §4.6 explicitly deferred the exact normalisation band boundaries and complexity sub-weights to Functional Design. Those values determine every classification, so the design stage carries real weight rather than being a formality.
 
@@ -257,7 +257,7 @@ Expressed in approval gates rather than developer-days, since this is an AI-driv
 
 ### Primary Goal
 
-A working, locally runnable application that classifies the 22 simulated Arla BW objects into Decommission, Replicate As-Is, and Rebuild as Data Product, explains every classification, visualises dependencies, plans migration waves, and is presentable to a customer without apology.
+A working, locally runnable application that classifies the 22 simulated Acme BW objects into Decommission, Replicate As-Is, and Rebuild as Data Product, explains every classification, visualises dependencies, plans migration waves, and is presentable to a customer without apology.
 
 ### Key Deliverables
 

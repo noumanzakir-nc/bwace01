@@ -1,8 +1,12 @@
 """The only pandas-touching module. Domain objects to DataFrames. See domain-entities.md #4."""
 from __future__ import annotations
 
+from typing import Sequence
+
 import pandas as pd
 
+from bwace.engine.config import ODATA_ENV_VARS, ODATA_LIVE_DATASETS
+from bwace.engine.odata import EndpointResult, OdataSettings
 from bwace.engine.models import (
     AssessmentResult,
     Category,
@@ -13,6 +17,17 @@ from bwace.engine.models import (
     ScenarioDiff,
     WavePlan,
 )
+
+# Canonical dataset labels. Single definition so the sidebar, the Source Data
+# view and the Connection Settings view cannot drift apart.
+DATASET_LABELS: dict[str, str] = {
+    "object_inventory": "Object Inventory",
+    "usage_logs": "Usage Logs",
+    "criticality": "Criticality Matrix",
+    "dependencies": "Dependency Map",
+    "data_volume": "Data Volume Metrics",
+    "complexity": "Complexity Scores",
+}
 
 
 def object_inventory_frame(landscape: Landscape) -> pd.DataFrame:
@@ -201,3 +216,62 @@ def candidates_frame(result: AssessmentResult, landscape: Landscape) -> pd.DataF
             "rationale": a.classification.rationale,
         })
     return pd.DataFrame(rows)
+
+
+# ---- Connection Settings frames (requirements §10, FR-15.2) ----------------
+
+
+def endpoint_status_frame(endpoints: Sequence[EndpointResult]) -> pd.DataFrame:
+    rows = [{
+        "dataset": DATASET_LABELS.get(e.dataset, e.dataset),
+        "status": e.status.value,
+        "records": str(e.record_count) if e.record_count else "-",
+        "detail": e.detail,
+        "url": e.url,
+    } for e in endpoints]
+    return pd.DataFrame(rows, columns=["dataset", "status", "records", "detail", "url"])
+
+
+def endpoint_config_frame(settings: OdataSettings) -> pd.DataFrame:
+    rows = [{
+        "dataset": DATASET_LABELS.get(dataset, dataset),
+        "service path": settings.service_paths[dataset],
+        "resolved collection URL": settings.collection_url(dataset) if settings.base_url else "(base URL not set)",
+    } for dataset in ODATA_LIVE_DATASETS]
+    rows.append({
+        "dataset": DATASET_LABELS["criticality"],
+        "service path": "(no live source)",
+        "resolved collection URL": "bundled or uploaded file - business judgement matrix",
+    })
+    return pd.DataFrame(rows, columns=["dataset", "service path", "resolved collection URL"])
+
+
+def environment_frame(settings: OdataSettings) -> pd.DataFrame:
+    """Presence only. Values are never rendered (NFR-9.2)."""
+    rows = [
+        {"variable": ODATA_ENV_VARS["base_url"], "set": _yes_no(bool(settings.base_url)),
+         "effective value": settings.base_url or "(not set)"},
+        {"variable": ODATA_ENV_VARS["user"], "set": _yes_no(settings.user_set), "effective value": "(hidden)"},
+        {"variable": ODATA_ENV_VARS["password"], "set": _yes_no(settings.password_set), "effective value": "(hidden)"},
+        {"variable": ODATA_ENV_VARS["service_root"], "set": _yes_no(True),
+         "effective value": settings.service_root},
+        {"variable": ODATA_ENV_VARS["ca_bundle"], "set": _yes_no(bool(settings.ca_bundle)),
+         "effective value": settings.ca_bundle or "(system trust store)"},
+        {"variable": ODATA_ENV_VARS["timeout"], "set": _yes_no(True),
+         "effective value": f"{settings.timeout_seconds:g} s"},
+        {"variable": ODATA_ENV_VARS["max_records"], "set": _yes_no(True),
+         "effective value": str(settings.max_records)},
+    ]
+    return pd.DataFrame(rows, columns=["variable", "set", "effective value"])
+
+
+def provenance_frame(landscape: Landscape) -> pd.DataFrame:
+    rows = [{
+        "dataset": DATASET_LABELS.get(name, name),
+        "provenance": landscape.sources.get(name, "bundled"),
+    } for name in DATASET_LABELS]
+    return pd.DataFrame(rows, columns=["dataset", "provenance"])
+
+
+def _yes_no(value: bool) -> str:
+    return "yes" if value else "no"

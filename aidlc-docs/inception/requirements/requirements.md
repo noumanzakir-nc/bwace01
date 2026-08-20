@@ -16,7 +16,7 @@
 | **Scope** | System-wide — a new standalone application |
 | **Complexity** | Moderate. The data model is small and fully specified; the analytical model and three-view UI carry the complexity. |
 | **Project nature** | Demo / Proof of Concept for a customer presentation. Not a production workload. |
-| **Primary success criterion** | The tool must be credible and legible in front of an Arla audience: every classification must be explainable, and the visuals must be on-brand and readable. |
+| **Primary success criterion** | The tool must be credible and legible in front of an Acme audience: every classification must be explainable, and the visuals must be on-brand and readable. |
 
 ### 1.1 Why this is a PoC and what that implies
 
@@ -31,10 +31,10 @@ The application will be run locally on a presenter's laptop for a customer demo.
 | ID | Requirement | Priority |
 |---|---|---|
 | FR-1.1 | The system shall load six datasets from JSON files: BW object inventory, usage logs, business criticality matrix, dependency map, data volume metrics, and complexity scores. | Must |
-| FR-1.2 | The system shall ship with the simulated Arla dataset pre-loaded: 22 objects across 12 solution areas (plus one multi-area custom table), exactly as specified in sections 3.1–3.6 of the source requirement document. | Must |
+| FR-1.2 | The system shall ship with the simulated Acme dataset pre-loaded: 22 objects across 12 solution areas (plus one multi-area custom table), exactly as specified in sections 3.1–3.6 of the source requirement document. | Must |
 | FR-1.3 | The system shall allow a user to upload a replacement CSV or JSON file for any of the six datasets at runtime through the UI, and recompute all classifications against the uploaded data. | Must |
 | FR-1.4 | The system shall validate uploaded data against the expected schema and report clear, human-readable errors without crashing when validation fails. | Must |
-| FR-1.5 | The system shall allow a user to revert to the bundled Arla demo dataset at any time. | Should |
+| FR-1.5 | The system shall allow a user to revert to the bundled Acme demo dataset at any time. | Should |
 
 **Decision reference**: Q11 = B (bundled JSON plus live upload).
 
@@ -345,7 +345,7 @@ Computed 2026-08-19 with the same checker, re-validated against all five WCAG an
 | ID | Requirement |
 |---|---|
 | NFR-7.1 | The scoring engine, classification logic, normalisation bands, dependency analysis, and wave planner shall have unit test coverage. |
-| NFR-7.2 | Tests shall assert the documented reference classification for the bundled Arla dataset, so that regressions in the analytical model are caught. |
+| NFR-7.2 | Tests shall assert the documented reference classification for the bundled Acme dataset, so that regressions in the analytical model are caught. |
 | NFR-7.3 | Each UI view shall have a smoke test verifying it renders without error. |
 | NFR-7.4 | Tests shall be runnable with a single command on both Windows and Linux. |
 
@@ -366,11 +366,11 @@ Derived from the PoC nature of the project and the extension opt-outs in §7:
 
 - Authentication, authorisation, and user management
 - Network exposure beyond localhost; no public deployment
-- Encryption at rest or in transit
+- Encryption at rest or in transit — ~~as originally written~~ **partially superseded 2026-08-19 (§10)**: outbound OData calls are TLS-verified and verification cannot be disabled (NFR-9.4). Encryption at rest remains out of scope; no credentials are written to disk (NFR-9.1).
 - Audit logging, monitoring, alerting, or observability tooling
 - High availability, failover, backup, or disaster recovery
-- Live connection to a real SAP BW system — all data is file-based and simulated
-- Write-back of any kind to SAP systems
+- ~~Live connection to a real SAP BW system — all data is file-based and simulated~~ — **superseded 2026-08-19 by §10**. Live SAP OData connectivity is now in scope, read-only, with demo mode retained as the default.
+- Write-back of any kind to SAP systems — **still out of scope and now explicit**: NFR-9.6 permits HTTP GET only.
 - Property-based testing
 
 ---
@@ -399,7 +399,7 @@ Expected effect on the bundled dataset: `IN200` moves to Decommission via the do
 
 ## 4. Validation Findings
 
-The approved model was implemented as a throwaway script and executed against the full 22-object Arla dataset before writing this document. The model behaves well overall, but validation surfaced two defects that require a decision.
+The approved model was implemented as a throwaway script and executed against the full 22-object Acme dataset before writing this document. The model behaves well overall, but validation surfaced two defects that require a decision.
 
 ### 4.1 Overall result — healthy
 
@@ -444,7 +444,7 @@ This relates to clarification question CQ4, where the answer was **A (no overrid
 
 `FI100GC` (Main P&L Query) scores **Effort 66.3** against an Effort threshold of 67, so it classifies as **Replicate As-Is** by a margin of 0.7 points. Any small change to the effort bands flips it to Rebuild.
 
-No action is proposed. With the Effort threshold exposed as a slider (FR-3.3) this is an asset rather than a defect: nudging one control visibly moves Arla's flagship P&L query between treatments, which makes the sensitivity of the model tangible to an audience. It is recorded here so the behaviour is understood in advance rather than discovered live.
+No action is proposed. With the Effort threshold exposed as a slider (FR-3.3) this is an asset rather than a defect: nudging one control visibly moves Acme's flagship P&L query between treatments, which makes the sensitivity of the model tangible to an audience. It is recorded here so the behaviour is understood in advance rather than discovered live.
 
 ### 4.6 Proposed addition — usage recency
 
@@ -539,3 +539,217 @@ Per deferred rule loading, none of the three full extension rule files were load
 - Unit tests on the analytical engine, smoke tests on the UI. Minimal code comments; rationale kept in `aidlc-docs/`.
 
 **Status**: Approved 2026-08-18. Both open decisions resolved in favour of the stated recommendations (§3.10).
+
+---
+
+## 10. Live SAP OData Connectivity (new feature, eighth iteration, 2026-08-19)
+
+This section extends the approved requirements rather than replacing any part of them. Nothing in §1-§9 changes except §7 (extension configuration, restated in §10.11) and the out-of-scope list in §3.9, from which "no SAP integration" is now removed.
+
+### 10.1 Intent analysis
+
+| Aspect | Assessment |
+|---|---|
+| **User request** | Add OData connectivity so BW-ACE can run against a live SAP BW system, switchable with demo mode, with a Connection Settings page, Basic (or OAuth) authentication, and credentials supplied through environment variables. |
+| **Request type** | New Feature — the first external integration in the product; every prior iteration was internal. |
+| **Scope** | Multiple Components, both units. `assessment-engine` gains a connector layer and a second data ingress alongside `loader.py`; `presentation-app` gains a Connection Settings view, a mode switch, and provenance indication. |
+| **Complexity** | Complex. First network I/O, first secret handling, first new runtime dependency since inception, and the first code path that cannot be exercised against a real system from this environment. |
+| **Requirements depth** | Comprehensive. |
+| **Primary success criterion** | In the room, it must always be unambiguous which data is on screen, and a live connection failure must never silently degrade into demo data presented as if it were the customer's own. |
+
+### 10.2 Finding: the named services are not SAP-delivered
+
+The source requirement names three services as though SAP ships them: `/RSOD_ADSO_SRV`, `/RSPC_API_SRV`, `/RSOD_CATALOG_SRV`. SAP's documentation and community sources were searched before this section was written and **no SAP-delivered OData service by any of those names could be found**.
+
+What SAP does deliver is the framework, and on that point the business analyst is correct: SAP Gateway publishes OData services under `/sap/opu/odata/sap/<SERVICE_NAME>`, each exposing `$metadata` and entity-set collections, and this is a legitimate, modern, read-friendly route into BW. The documented BW pattern, however, is that such a service is **created and activated** over BW metadata or a BW query in the customer's own system — see the community-documented procedure for creating an OData service for a BW query, which ends with the new service appearing in the Gateway service catalogue.
+
+The three names are therefore treated as **illustrative placeholder defaults**, not as endpoints that will exist in an Acme system. Hardcoding them would produce a tool that demonstrates perfectly and fails on first contact with the real landscape. FR-13.3 makes every service path configurable with those names as the shipped defaults, so the demo still shows exactly the endpoint list that was promised while remaining pointable at whatever the customer has actually activated.
+
+**Presentation obligation (FR-15.6)**: the Connection Settings page states that the default paths are placeholders. The tool must not assert to a customer that SAP delivers services it does not deliver.
+
+### 10.3 FR-13 — Connection and configuration
+
+| ID | Requirement | Priority |
+|---|---|---|
+| FR-13.1 | The application shall support two data source modes: **Demo Data** (bundled or uploaded files, the existing behaviour) and **Live OData**. Demo Data shall be the default on every startup. | Must |
+| FR-13.2 | Live OData mode shall be enterable only after a successful connection test in the current session. | Must |
+| FR-13.3 | The base URL, the service root path (default `/sap/opu/odata/sap`), and the service/entity-set path for each live dataset shall be configurable through environment variables, with the defaults in §10.4. | Must |
+| FR-13.4 | The Connection Settings page shall display the effective resolved URL for each configured endpoint, so a misconfiguration is visible before a fetch is attempted. | Must |
+| FR-13.5 | A "Test Connection" action shall issue a `$metadata` request per configured service and report a per-endpoint outcome: reachable / authenticated / not found (404) / unauthorised (401 or 403) / TLS failure / timeout. | Must |
+| FR-13.6 | Connection configuration shall be read once at process start and re-read on an explicit user action, never cached across a process restart. | Should |
+| FR-13.7 | Authentication shall support HTTP Basic over TLS. The connector shall be structured so that an OAuth 2.0 client-credentials strategy can be added without reshaping the fetch or mapping layers. | Must |
+| FR-13.8 | OAuth 2.0 and X.509 client-certificate authentication are **out of scope for this iteration** and shall be stated as such on the Connection Settings page rather than shown as non-functioning controls. | Must |
+
+**Decision reference**: Q1 = A, Q2 = A, Q4 = A.
+
+### 10.4 FR-14 — Fetch, mapping, failure and refresh
+
+#### 10.4.1 Dataset to endpoint mapping
+
+The five endpoints named in the request do not map one-to-one onto BW-ACE's six datasets. `criticality` is the clearest case: business criticality, migration priority, and downtime tolerance per solution area are **business judgements**, not BW metadata, and no BW service can supply them.
+
+| BW-ACE dataset | Live source | Default path (placeholder) | Environment variable |
+|---|---|---|---|
+| `object_inventory` | Object catalogue | `RSOD_CATALOG_SRV/ObjectCatalog` | `BWACE_ODATA_SERVICE_INVENTORY` |
+| `complexity` | ADSO metadata | `RSOD_ADSO_SRV/AdsoMetadata` | `BWACE_ODATA_SERVICE_COMPLEXITY` |
+| `data_volume` | ADSO volume metrics | `RSOD_ADSO_SRV/AdsoVolume` | `BWACE_ODATA_SERVICE_VOLUME` |
+| `dependencies` | Process chains | `RSPC_API_SRV/ProcessChains` | `BWACE_ODATA_SERVICE_DEPENDENCIES` |
+| `usage_logs` | Query results | `RSOD_USAGE_SRV/Results` | `BWACE_ODATA_SERVICE_USAGE` |
+| `criticality` | **No live source.** Always bundled or uploaded. | n/a | n/a |
+
+| ID | Requirement | Priority |
+|---|---|---|
+| FR-14.1 | Live mode shall fetch the five datasets above and shall continue to use the bundled or uploaded `criticality` matrix. | Must |
+| FR-14.2 | Each dataset's provenance shall be recorded and displayed as `live`, `uploaded`, or `bundled`. No dataset shall ever be presented without its provenance being discoverable. | Must |
+| FR-14.3 | Live records shall be mapped onto the existing dataset schemas by an explicit, field-by-field, per-dataset mapping, and shall then pass through the **existing** validation and referential-integrity checks unchanged, surfacing in the existing validation panel. | Must |
+| FR-14.4 | Collection retrieval shall honour OData V2 server-side paging (`__next`, with `$skip`/`$top` where required) and continue until the collection is exhausted. | Must |
+| FR-14.5 | A configurable maximum record count per dataset (`BWACE_ODATA_MAX_RECORDS`, default 5,000) shall bound retrieval. Reaching the cap shall raise a clearly worded warning, never a silent truncation. | Must |
+| FR-14.6 | A live refresh shall replace the working landscape **only** when all five live datasets have been retrieved and assembled into a valid landscape. On any failure the previously displayed landscape shall be retained unchanged and the failure reported per endpoint. | Must |
+| FR-14.7 | Live data shall be fetched on entering live mode and on an explicit "Refresh from SAP" action only. It shall never be re-fetched as a side effect of a threshold change, a navigation change, or any other Streamlit rerun. | Must |
+| FR-14.8 | The last successful fetch timestamp shall be recorded and displayed. | Must |
+| FR-14.9 | `$metadata` shall be used for connection testing (FR-13.5) and shall not be parsed to infer field mappings. | Must |
+| FR-14.10 | Every request shall carry an explicit connect and read timeout (`BWACE_ODATA_TIMEOUT_SECONDS`, default 30). A transient failure (timeout, connection reset, HTTP 5xx) shall be retried a bounded number of times with backoff; an authentication or not-found failure shall not be retried. | Must |
+
+**Decision reference**: Q7 = A, Q8 = A, Q9 = A, Q10 = A, Q11 = A, Q12 = A.
+
+**Note on FR-14.4/FR-14.5**: unpaged retrieval is the most dangerous failure mode available to this feature. A service returning its default page size would silently truncate the landscape, and BW-ACE would then compute a complete-looking assessment over partial data — individually plausible classifications that are collectively wrong, with nothing on screen to reveal it. Paging is a correctness requirement here, not a performance one.
+
+**Note on FR-14.1 read together with FR-14.6**: these are not in conflict. `criticality` is excluded from the live fetch set by design, so the all-or-nothing rule in FR-14.6 applies to the five datasets live mode is expected to supply. A hybrid landscape is the intended, labelled steady state; a hybrid landscape that arose from a *failed* fetch is what FR-14.6 forbids.
+
+**Note on FR-14.3**: reusing `loader.py`'s validators is what makes live data trustworthy on arrival — a live record missing a required field, or referencing a solution area absent from the criticality matrix, produces exactly the same error as a bad upload, in the same panel. It also preserves the existing content-fingerprint cache key, so the two-phase `compute_base` / `apply_config` caching from the approved Application Design continues to work untouched.
+
+### 10.5 NFR-9 — Credential and transport security
+
+| ID | Requirement |
+|---|---|
+| NFR-9.1 | Credentials shall be supplied only through environment variables (`BWACE_ODATA_USER`, `BWACE_ODATA_PASSWORD`), optionally loaded from a git-ignored `.env` file at startup. The application shall never write credentials to disk. |
+| NFR-9.2 | Credentials shall not be stored in Streamlit session state, and shall not be rendered to the screen in any form. The Connection Settings page shall report only whether each variable is **set**, never its value. |
+| NFR-9.3 | Credentials, `Authorization` headers, and cookies shall be masked in every error message, exception path, and log line. No response body or request header shall be echoed raw into the UI. |
+| NFR-9.4 | TLS certificate verification shall always be enabled. A custom CA bundle may be supplied via `BWACE_ODATA_CA_BUNDLE` for private or self-signed certificate authorities. **There shall be no option to disable verification.** |
+| NFR-9.5 | A TLS verification failure shall produce an error that names the cause and points explicitly at `BWACE_ODATA_CA_BUNDLE` as the remedy. |
+| NFR-9.6 | Only read operations (HTTP GET) shall be issued against the customer's system. The connector shall contain no code path that writes, and no CSRF-token handling is therefore required. |
+| NFR-9.7 | The `.env` file pattern shall be present in `.gitignore` before any connector code is written. |
+
+**Decision reference**: Q5 = A, Q6 = A.
+
+**Accepted consequence of NFR-9.4, recorded rather than buried**: SAP on-premise Gateway hosts commonly present self-signed or private-CA certificates. With no opt-out, a demo against such a sandbox is **blocked** until someone supplies the CA file. This is the direct cost of choosing Q6 = A over Q6 = B, and it is accepted deliberately: an opt-out is the kind of switch that gets set once for a sandbox and never unset. NFR-9.5 exists to make the remedy obvious in the moment rather than a debugging exercise in front of a customer.
+
+### 10.6 NFR-10 — Reliability and behaviour under failure
+
+| ID | Requirement |
+|---|---|
+| NFR-10.1 | A slow or unresponsive SAP host shall not hang the application. Every request is bounded by FR-14.10's timeout, and the UI shall show progress during a fetch. |
+| NFR-10.2 | Demo mode shall remain fully functional with no network access, no environment variables set, and no HTTP client reachable. Offline behaviour (NFR-3.1, NFR-3.2) is unchanged by this feature. |
+| NFR-10.3 | Every failure shall be attributable to a specific endpoint and a specific cause. A single "connection failed" message for five endpoints is not acceptable. |
+| NFR-10.4 | Mode and provenance shall never be ambiguous on screen. The current mode indicator shall be visible on every view. |
+
+### 10.7 NFR-11 — Testability and maintainability
+
+| ID | Requirement |
+|---|---|
+| NFR-11.1 | The HTTP transport shall be injectable so that every connector and mapper branch is testable without a network. |
+| NFR-11.2 | Recorded-fixture tests shall cover, at minimum: a normal single-page response, a `__next` paged response spanning at least two pages, the record cap being hit, HTTP 401, HTTP 404, HTTP 500 followed by a successful retry, a timeout, a malformed JSON body, and a payload missing a required field. |
+| NFR-11.3 | The existing test suite shall remain entirely offline and shall not slow measurably. No test shall attempt a real network connection. |
+| NFR-11.4 | Documentation shall state plainly that connector logic is verified by fixtures and that end-to-end live connectivity is unverified until run against a customer system. Fixture coverage shall not be described as live-verified. |
+| NFR-11.5 | The new HTTP client dependency shall be pinned to an exact version, consistent with the existing four pinned dependencies. |
+
+**Decision reference**: Q3 = A (`httpx`, pinned, synchronous client — per-operation timeouts and explicit TLS context control, both of which FR-14.10 and NFR-9.4 depend on), Q14 = A.
+
+### 10.8 FR-15 — Frontend presentation
+
+| ID | Requirement | Priority |
+|---|---|---|
+| FR-15.1 | A seventh navigation entry, **Connection Settings**, shall be added to the sidebar. | Must |
+| FR-15.2 | The Connection Settings page shall contain: the mode selector, environment variable presence indicators, resolved endpoint URLs, the Test Connection action with per-endpoint results, the Refresh from SAP action, the last successful fetch timestamp, and the per-dataset provenance table. | Must |
+| FR-15.3 | A persistent mode indicator shall appear in the page header of every view, reading `Demo Data` or `Live: <host>` with the last fetch time. | Must |
+| FR-15.4 | The mode indicator shall use the existing palette roles and shall satisfy NFR-4.2 contrast. No new hex literal shall be introduced. | Must |
+| FR-15.5 | Live mode with a stale or failed last fetch shall be visually distinct from live mode with fresh data. | Must |
+| FR-15.6 | The page shall state that the default service paths are placeholders to be pointed at the customer's activated services, and shall state that OAuth and client certificates are not implemented in this iteration. | Must |
+| FR-15.7 | The existing per-dataset upload controls and "Revert to Demo Data" behaviour shall continue to work unchanged in demo mode. | Must |
+
+**Decision reference**: Q13 = A.
+
+### 10.9 Contradiction and consistency analysis
+
+Performed on the answer set before this section was written, per the mandatory analysis step. All fifteen substantive answers are A. Three pairings were checked specifically because an inconsistent combination is easy to select by accident:
+
+| Pairing | Risk | Verdict |
+|---|---|---|
+| Q1 (explicit mode, no silent fallback) vs Q11 (all-or-nothing, retain previous data) | Could have required both "never swap data silently" and "substitute bundled data on failure" | **Consistent.** Both point the same way: on failure the app stays in live mode, keeps what it had, and reports the error. Neither substitutes data silently. |
+| Q7 (hybrid provenance — `criticality` stays bundled) vs Q11 (all-or-nothing replacement) | Reads as a direct contradiction: a permanent hybrid landscape versus a refusal to accept partial data | **Consistent once scoped.** Q7 fixes *which* datasets live mode fetches at all (five of six, by design). Q11 governs what happens when a dataset that *should* have arrived did not. Written explicitly into the FR-14.1 / FR-14.6 note so the distinction survives into design. |
+| Q4 (Basic auth only) vs Q16 (security extension off) | Could have combined a reduced auth scope with reduced security enforcement | **Consistent, and mitigated.** NFR-9.x makes the security behaviours binding requirements independent of extension status; see §10.11. |
+
+No clarification round was raised. One genuine ambiguity in the *instruction* rather than the answers is recorded in §10.11.
+
+### 10.10 Out of scope for this iteration
+
+Removed from §3.9: "no SAP integration". Everything below remains out of scope and is stated here so the boundary is explicit:
+
+- OAuth 2.0 and X.509 client-certificate authentication (FR-13.8)
+- Gateway service-catalogue discovery (Q2 option C)
+- `$metadata` / EDMX parsing for schema inference or a schema-diff report (Q9 option B)
+- A user-editable mapping file (Q8 option B)
+- Writing anything back to SAP — read-only by NFR-9.6
+- Automatic or background refresh, and any refresh TTL (Q12 options B and C)
+- A live source for `criticality`
+- Credential entry through the UI (Q5 option B) and `secrets.toml` support (Q5 option C)
+- Proxy configuration, SAP Cloud Connector, and SNC
+- End-to-end verification against a real SAP system — impossible from this environment (NFR-11.4)
+
+### 10.11 Extension configuration — unchanged, with the reasoning stated
+
+The three extension opt-ins were deliberately re-asked this round, because the reasoning behind the inception "No" answers (a demo/PoC with no network exposure) does not survive the arrival of credential handling and authenticated outbound calls.
+
+The instruction was to use the recommended answers. **Q16-Q18 carried no unambiguous recommendation** — their option text recommends A for production-grade applications and B for PoCs, and BW-ACE is a PoC that has just grown a credentialed integration. Rather than record a guess as a user decision, the inception answers were **carried forward unchanged** and flagged:
+
+| Extension | Enabled | Basis |
+|---|---|---|
+| Security Baseline | No | Carried forward from inception. Not re-decided. |
+| Resiliency Baseline | No | Carried forward from inception. Not re-decided. |
+| Property-Based Testing | No | Carried forward from inception. Not re-decided. |
+
+No extension rule files were loaded. The practical exposure is limited, deliberately:
+
+- The security behaviours are binding as **NFR-9.1 to NFR-9.7**, not as extension rules. Extension status affects whether there is a formal per-stage compliance audit; it does not license storing credentials in session state, disabling TLS verification, or leaking secrets into error text.
+- The resiliency behaviours that matter here — timeouts, bounded retries, explicit failure states, no partial replacement — are functional requirements FR-14.6, FR-14.7 and FR-14.10 plus NFR-10.x.
+
+**Open for the user**: enabling the Security Baseline (Q16 = A) is cheap now and expensive after Code Generation. Property-Based Testing at "Partial" (Q18 = B) would apply naturally to the OData response mapper, which is a pure parse-and-transform function and close to an ideal PBT target.
+
+### 10.12 Assumptions
+
+| ID | Assumption |
+|---|---|
+| A-8 | The customer's BW system exposes, or will expose, activated SAP Gateway OData services carrying the metadata BW-ACE needs. The named default paths are placeholders (§10.2). |
+| A-9 | Those services return OData V2 JSON (`$format=json` or an `Accept: application/json` header honoured). OData V4 payload shapes are not handled in this iteration. |
+| A-10 | The usage service can supply per-object aggregates equivalent to `last_run_date`, `monthly_executions`, `distinct_users`, and `business_owner`, or a shape that reduces to them. `business_owner` in particular may have no BW source and may need to arrive with the criticality matrix. |
+| A-11 | A live landscape stays within the ~1,000-object envelope of NFR-5.3. The FR-14.5 cap of 5,000 records per dataset sits above that with headroom. |
+| A-12 | Basic authentication over TLS is acceptable to the customer for a read-only PoC connection. |
+
+### 10.13 Traceability
+
+| Requirement | Source |
+|---|---|
+| FR-13.1, FR-13.2 | User request ("switch between live OData mode and demo mode"), Q1 = A |
+| FR-13.3, FR-13.4, FR-15.6 | §10.2 finding, Q2 = A |
+| FR-13.5, FR-14.9 | User request (`$metadata`), Q9 = A |
+| FR-13.7, FR-13.8 | User request ("Basic Authentication (or OAuth...)"), Q4 = A |
+| FR-14.1, FR-14.2 | Six-dataset / five-endpoint gap analysis, Q7 = A |
+| FR-14.3 | Existing `loader.py` validators, Q8 = A |
+| FR-14.4, FR-14.5 | OData V2 paging semantics, Q10 = A |
+| FR-14.6 | Q11 = A |
+| FR-14.7, FR-14.8 | Q12 = A, existing rerun/caching behaviour |
+| FR-14.10, NFR-10.1 | Q3 = A, Q10 = A |
+| FR-15.1 to FR-15.5, FR-15.7 | User request ("reflected on frontend application", "connection settings page"), Q13 = A |
+| NFR-9.1 to NFR-9.7 | User request ("secure credential storage via environment variables"), Q5 = A, Q6 = A |
+| NFR-11.1 to NFR-11.5 | Q14 = A, Q3 = A, existing NFR-7.x testing requirements |
+
+### 10.14 Summary
+
+- Two explicit modes, **Demo Data by default**, live mode gated behind a successful connection test. No silent substitution in either direction.
+- The three service names in the source requirement are **not SAP-delivered**; they ship as configurable placeholder defaults and the UI says so.
+- **Five of six datasets** come from live OData. `criticality` has no BW source and stays bundled or uploaded, labelled.
+- Live records are mapped field-by-field and then pushed through the **existing** validators, so live data faces the same checks as an upload and the existing fingerprint cache keeps working.
+- **Paging is a correctness requirement.** An unpaged GET would silently truncate and yield a confidently wrong assessment.
+- All-or-nothing replacement: a failed fetch never leaves a half-live landscape on screen.
+- Credentials live in environment variables only, never in session state, never rendered, always masked. **TLS verification cannot be disabled** — with the accepted cost that a self-signed sandbox needs a CA bundle before it will connect.
+- `httpx`, pinned, injectable transport. Connector logic verified by recorded fixtures; live connectivity is explicitly unverified until run against a real system.

@@ -396,3 +396,28 @@ Implements Q3=B (chrome polish plus layout refinement), Q4=A (bordered cards on 
 | S8.2 (revised, post-approval, 2026-08-19) | BR-P1.7, BR-P1.7a, BR-P1.8, BR-P3.6–BR-P3.8, BR-P6.13–BR-P6.16, BR-P14.1–BR-P14.7 |
 
 All 12 Unit 2 stories have their presentation rules specified. S8.1 is the one story whose substance is launch scripting rather than rendering; its rules belong to Code Generation and are listed in `frontend-components.md` §8 for traceability. S9.1 is a post-approval enhancement, added outside the original 12-story inventory (see `aidlc-state.md` Post-Approval Change log).
+
+---
+
+## BR-P15 — Connection Settings and Data Source Mode (added 2026-08-19, requirements §10)
+
+Implemented in `views/connection_settings.py`, `widgets.mode_indicator`, `frames` (four new builders), and `main.py`. Verified by 7 new tests in `tests/app/test_smoke_views.py`.
+
+| ID | Rule |
+|---|---|
+| BR-P15.1 | `data_mode` is `"demo"` on every startup. No environment variable, and no stored state, can make the app start in live mode. |
+| BR-P15.2 | Switching to live requires `odata_tested_ok` in the current session. A refused switch leaves the mode unchanged and states why. |
+| BR-P15.3 | The mode indicator renders on every view from a single call in `main.py`, above the view's own header. Three states: demo (accent fill), live and fresh (dark green fill, with the fetch timestamp), live and failed (sand fill, warning glyph, "last refresh failed - showing previously loaded data"). **Deviation from FR-15.3 as written**: the chip sits directly above each view's header rather than inside `widgets.page_header`, which avoided touching all seven view signatures and keeps `st.header` as the first element the smoke tests assert on. |
+| BR-P15.4 | Every colour comes from `palette()`. No hex literal was added by this feature. |
+| BR-P15.5 | The environment table shows a set/not-set flag per variable. The user and password rows render `(hidden)` in place of any value. |
+| BR-P15.6 | The endpoint table states that the default service paths are placeholders and that no SAP-delivered service by those names could be found. |
+| BR-P15.7 | The view states that authentication is Basic over TLS, that certificate verification is always on, and that OAuth and client certificates are not implemented. No control is shown for an unimplemented option. |
+| BR-P15.8 | The view is render-only: it returns a `SettingsAction` and performs no fetch, no environment read, and no session-state mutation. All I/O and state changes happen in `main.py`, preserving the single-owner rule from BR-P12. |
+| BR-P15.9 | The provenance table lists all six datasets with `live`, `uploaded`, or `bundled`, and explains why `criticality` has no live source. |
+| BR-P15.10 | Live data is fetched on entering live mode and on the Refresh button only. Fetched payloads live in session state, so threshold drags, navigation, and every other rerun reuse them without re-contacting SAP. |
+| BR-P15.11 | "Revert to Demo Data" in the sidebar clears uploads **and** returns the mode to demo, so one control reliably restores the demo landscape. |
+| BR-P15.12 | Test keys added: `connection-mode-selector`, `connection-env-table`, `connection-endpoint-config-table`, `connection-test-button`, `connection-refresh-button`, `connection-reload-button`, `connection-endpoint-table`, `connection-provenance-table`. No existing key was changed or removed. |
+
+**Not verifiable by the test suite, stated plainly**: the live path is exercised end to end only against a stubbed transport (`test_live_mode_end_to_end_with_a_stubbed_transport`). Real SAP connectivity — genuine TLS negotiation, real Gateway paging behaviour, actual property names — is unverified until run against a customer system.
+
+**Secret-leak test**: `test_no_secret_appears_anywhere_in_the_rendered_page` sets real-looking credentials, renders the view, and asserts neither value appears in any markdown, caption, subheader, or dataframe. It also asserts the environment was actually read and that the rendered text is non-trivial, so the check cannot pass vacuously.

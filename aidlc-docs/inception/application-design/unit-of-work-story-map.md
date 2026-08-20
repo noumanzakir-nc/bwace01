@@ -97,7 +97,7 @@ Three stories had acceptance criteria that could not be satisfied within one uni
 
 | Story | Title | Epic | Requirements |
 |---|---|---|---|
-| S1.1 | Load the bundled Arla landscape | Data Foundation | FR-1.1, FR-1.2 |
+| S1.1 | Load the bundled Acme landscape | Data Foundation | FR-1.1, FR-1.2 |
 | S1.2 | Assess my own landscape extract | Data Foundation | FR-1.3, FR-1.5 |
 | **S1.3a** | Detect and report invalid data | Data Foundation | FR-1.4 |
 | S2.1 | See each object scored on business value and technical effort | Scoring | FR-2.1 – FR-2.4 |

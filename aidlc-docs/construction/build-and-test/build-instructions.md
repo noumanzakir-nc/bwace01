@@ -3,8 +3,8 @@
 ## Prerequisites
 - **Build tool**: `pip` with `setuptools>=69` (declared in `pyproject.toml`'s `[build-system]`)
 - **Python**: 3.11 or newer. Verified on this machine's Python **3.14.0**.
-- **Dependencies**: pinned exactly in `pyproject.toml` — `networkx==3.6.1`, `streamlit==1.61.1`, `pandas==3.0.5`, `plotly==6.9.0`; dev extra `pytest==9.1.1`
-- **Environment variables**: none required
+- **Dependencies**: pinned exactly in `pyproject.toml` — `networkx==3.6.1`, `streamlit==1.61.1`, `pandas==3.0.5`, `plotly==6.9.0`, `httpx==0.28.1`; dev extra `pytest==9.1.1`. `httpx` added 2026-08-19 for live SAP OData mode (requirements §10) and imported lazily, so demo mode runs without it.
+- **Environment variables**: none required. Optional for live SAP OData mode only — `BWACE_ODATA_BASE_URL`, `BWACE_ODATA_USER`, `BWACE_ODATA_PASSWORD`, and the optional overrides listed in `.env.example`. The app starts in demo mode and needs none of them.
 - **System requirements**: no specific memory/disk constraints beyond a standard Python install; no database, no Docker, no Node.js (NFR-2.3)
 
 ## Build Steps

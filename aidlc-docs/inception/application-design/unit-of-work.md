@@ -129,14 +129,14 @@ Q7=A selected the AI-DLC greenfield multi-unit monolith pattern: `src/{unit}/` a
 ### 4.1 Directory tree
 
 ```
-c:\git\rfp\arla-sap\
+c:\git\rfp\acme-sap\
 ├── pyproject.toml                       single project definition, pinned deps
 ├── README.md                            setup and run for Windows and Linux
 ├── run.bat                              Windows launcher
 ├── run.sh                               Linux and macOS launcher
 ├── .gitignore
 │
-├── data/                                bundled Arla datasets (source sections 3.1-3.6)
+├── data/                                bundled Acme datasets (source sections 3.1-3.6)
 │   ├── object_inventory.json
 │   ├── usage_logs.json
 │   ├── criticality.json

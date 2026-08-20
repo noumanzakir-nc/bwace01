@@ -1,15 +1,15 @@
 # AI-DLC Audit Log
 
 Project: BW Object Assessment & Classification Engine (BW-ACE)
-Workspace: `c:\git\rfp\arla-sap`
+Workspace: `c:\git\rfp\acme-sap`
 
 ---
 
 ## Initial User Request
 **Timestamp**: 2026-08-18T00:00:00Z
-**User Input**: "using AI-DLC, I want to create a new project. The details are available in c:\git\rfp\arla-sap\requirements\requirement-document.txtPlease ask me questions if something is not clear. Use the most stable / LTS version of technology stack. Generate a simple way to run the final application on windows and linux, and document it in readme. The application is a demo/PoC which will be used in customer demo. The folder structure is for reference, the final strcuture can look different based on technical reasons. For the UI, The colors are HEX (02462f, f2f7f1, f6eeee, ffffff), Fonts can be HEX (0d6a4b, 82ce71, ffffff), but remember to check the contrast and usage of color appropriately so it's readable and doesn't look bad. The technology stack is also a recommendation and you can suggest if something can be replaced with a better/more appropriate alternative."
+**User Input**: "using AI-DLC, I want to create a new project. The details are available in c:\git\rfp\acme-sap\requirements\requirement-document.txtPlease ask me questions if something is not clear. Use the most stable / LTS version of technology stack. Generate a simple way to run the final application on windows and linux, and document it in readme. The application is a demo/PoC which will be used in customer demo. The folder structure is for reference, the final strcuture can look different based on technical reasons. For the UI, The colors are HEX (02462f, f2f7f1, f6eeee, ffffff), Fonts can be HEX (0d6a4b, 82ce71, ffffff), but remember to check the contrast and usage of color appropriately so it's readable and doesn't look bad. The technology stack is also a recommendation and you can suggest if something can be replaced with a better/more appropriate alternative."
 
-**Attached context**: `requirements/requirement-document.txt` (full content provided in conversation) describing BW-ACE: a BW object assessment & classification tool with 6 data sources, weighted scoring engine, 3 classification categories, dashboard / object detail / wave planner UI views, simulated Arla data for 22 objects across 13 solution areas, and a recommended Streamlit + Pandas + NetworkX + Plotly stack.
+**Attached context**: `requirements/requirement-document.txt` (full content provided in conversation) describing BW-ACE: a BW object assessment & classification tool with 6 data sources, weighted scoring engine, 3 classification categories, dashboard / object detail / wave planner UI views, simulated Acme data for 22 objects across 13 solution areas, and a recommended Streamlit + Pandas + NetworkX + Plotly stack.
 
 **AI Response**: Displayed AI-DLC welcome message. Resolved rule details directory to `.kiro/aws-aidlc-rule-details/`. Loaded common rules (process-overview, session-continuity, content-validation, question-format-guide, welcome-message, depth-levels) and extension opt-in prompts (security baseline, resiliency baseline, property-based testing). Proceeded to Workspace Detection.
 
@@ -86,7 +86,7 @@ Created `aidlc-docs/inception/requirements/requirement-clarification-questions.m
 **Verification performed before writing requirements**:
 1. Probed available Python — only 3.14.0 installed on machine (no 3.12 as specified by Q10=A)
 2. Created throwaway venv, installed full stack — succeeded: streamlit 1.61.1, pandas 3.0.5, networkx 3.6.1, plotly 6.9.0 on Python 3.14.0. Confirmed via web search that Streamlit supports Python 3.10-3.14.
-3. Implemented the approved two-axis model as a throwaway script and executed it against all 22 Arla objects to validate the classification spread
+3. Implemented the approved two-axis model as a throwaway script and executed it against all 22 Acme objects to validate the classification spread
 4. Deleted probe venv and script after use
 
 **Validation findings**:
@@ -829,3 +829,125 @@ Read `frontend-design-refresh-questions.md`. Answers: **Q1=A, Q2=A, Q3=A→B, Q4
 **Context**: 🟢 CONSTRUCTION — seventh post-approval change to `presentation-app`, implemented under Q10=A without reopening Application Design, Units Generation, or Unit 2 Functional Design gates. Build and Test approval remains the outstanding gate.
 
 ---
+
+---
+
+## New Feature Request — SAP OData Connectivity (Live / Demo Mode)
+**Timestamp**: 2026-08-19T00:00:00Z
+
+**User Input**: "using AI-DLC, I want to add a new feature to my solution. My business analyst want the application to also have the functionality to connecte to OData. He gave me the following requirement which needs to be added to this solution and reflected on frontend application.We can switch between live OData mode and demo mode—so we can always show you the tool in action, even if we haven't connected to your production system yet...Here is the connection settings page. You'll see that we support OData (RESTful) APIs—the modern, secure, SAP-standard way to access BW metadata.The tool is pre-configured with:Base URL for your OData servicesBasic Authentication (or OAuth, depending on your setup)Secure credential storage via environment variablesOnce credentials are provided, BW-ACE will connect to these OData endpoints:/RSOD_ADSO_SRV to fetch ADSO metadata/RSPC_API_SRV to fetch process chains/RSOD_CATALOG_SRV to fetch the full object catalog/.../$metadata to fetch query structures/.../Results to fetch usage dataThis is SAP's own OData framework—the same services SAP BusinessObjects and SAP Analytics Cloud use."
+
+**AI Response**: Memory tools requested by the `check-memory-first` hook are not available in this session; `aidlc-docs/aidlc-state.md` was used as the authoritative record of prior decisions. Previously recorded preferences remain in effect (minimal code comments with rationale in aidlc-docs per NFR-8.4; project-specific detail stays out of the memory graph; shell notes on `$` stripping and `;` as separator).
+
+Resolved rule details directory to `.kiro/aws-aidlc-rule-details/`. Loaded common rules (process-overview, session-continuity, content-validation, question-format-guide) and the three extension opt-in prompts. Welcome message not re-displayed — this is a continuing AI-DLC project, so `session-continuity.md` applies instead.
+
+**Context**: Workflow restart for a new feature — INCEPTION PHASE, Workspace Detection
+
+---
+
+## Workspace Detection (eighth iteration)
+**Timestamp**: 2026-08-19T00:00:00Z
+**User Input**: N/A (automatic stage)
+
+**AI Response**: `aidlc-docs/aidlc-state.md` exists — existing AI-DLC project resumed rather than re-initialised. Workspace now contains code (previous iterations built it), so the project is technically **brownfield**.
+
+- **Reverse Engineering: SKIPPED.** No `aidlc-docs/inception/reverse-engineering/` directory exists, which would ordinarily trigger the stage. Skipped deliberately because this codebase was produced by this same AI-DLC workflow and forward-engineering artifacts already document it at higher fidelity than reverse engineering would recover: `application-design/` (16 components, methods, services, dependency matrix), per-unit `functional-design/` for both units, and `build-and-test/`. These artifacts are current as of the seventh iteration, completed the same day. Running reverse engineering would rediscover what is already written down.
+- **Existing code confirmed**: Python 3.11+ / `pyproject.toml` (setuptools, src layout), packages `bwace.engine` (11 modules) and `bwace.app` (5 modules + 6 views), 89 passing tests, 6 bundled JSON datasets in `data/`.
+- **Current dependencies**: networkx 3.6.1, streamlit 1.61.1, pandas 3.0.5, plotly 6.9.0, pytest 9.1.1 (dev). **No HTTP client library present** — the engine is otherwise stdlib-only outside networkx/pandas.
+- **Relevant existing structure for this feature**: `engine/loader.py` is the single data ingress (`load_bundled`, `load_with_overrides`, both reading `data/*.json` from disk and returning `LoadOutcome`); `Landscape.sources` already carries a per-dataset `"bundled" | "uploaded"` provenance label; `app/main.py` owns all session state and the sidebar Data Sources block; navigation is a 6-entry sidebar radio.
+- **Next stage**: Requirements Analysis.
+
+**Context**: INCEPTION - Workspace Detection complete (brownfield, RE skipped with rationale)
+
+---
+
+## Requirements Analysis — Clarifying Questions Created (OData Connectivity)
+**Timestamp**: 2026-08-19T00:00:00Z
+**User Input**: N/A (AI-initiated step)
+
+**AI Response**: Intent analysis:
+- **Request Type**: New Feature (first external integration in the product — every prior iteration was internal)
+- **Request Clarity**: Clear on intent and on the demo/live switching goal; **incomplete** on the technical contract — no OData entity sets, field names, payload shapes, authentication flow detail, paging behaviour, failure semantics, or test system availability
+- **Scope**: Multiple Components — both existing units. Engine gains a connector layer and a second ingress path alongside `loader.py`; presentation gains a Connection Settings view, a mode switch, and status indication
+- **Complexity**: Complex. First network I/O, first secret handling, first new runtime dependency since inception, first code path that cannot be exercised against a real system in this environment
+- **Depth selected**: Comprehensive (matches the original inception round; higher than the Standard depth used for the Source Data View and design-refresh iterations)
+
+**Finding recorded before questions were written — the named services do not appear to be SAP-delivered.** Searched SAP's own documentation and community sources for `RSOD_ADSO_SRV`, `RSPC_API_SRV`, and `RSOD_CATALOG_SRV`. No SAP-delivered OData service by any of those names is discoverable. What SAP does deliver is the *framework*: SAP Gateway exposes services under `/sap/opu/odata/sap/<SERVICE_NAME>`, each with `$metadata` and entity-set `Results`-style collections, and the documented BW pattern is to **create** such a service over BW metadata (for example the community-documented "create an OData service for a BW query" procedure) rather than to consume a pre-delivered metadata catalogue. The business analyst's framing ("SAP's own OData framework") is accurate; the three specific service names are best treated as **illustrative placeholders**, not as endpoints that will exist in an Acme system. This is material: hardcoding them would produce a tool that fails on first contact with the customer's real landscape, and asserting them in a demo would be a claim I cannot support. Q2 puts the choice to the user; the recommendation is configurable service paths defaulting to the names as given.
+
+**Secondary technical observations recorded** (offered as options, nothing assumed): the six BW-ACE datasets do not map one-to-one onto the five named endpoints — `criticality` (business criticality, migration priority, downtime tolerance) is a business judgement matrix with no plausible BW source, and `usage_logs` needs per-object aggregates (`last_run_date`, `monthly_executions`, `distinct_users`, `business_owner`) that a `Results` collection would have to be reduced into; SAP on-premise Gateway hosts commonly present self-signed or private-CA TLS certificates, so certificate handling needs an explicit decision rather than a default; OData V2 server-side paging returns `__next` links, so a naive single GET can silently truncate; and the existing `Landscape.sources` provenance vocabulary (`bundled`/`uploaded`) needs a third value for live data.
+
+Created `aidlc-docs/inception/requirements/odata-connectivity-questions.md` with 15 questions across 6 sections (Connection & Configuration, Authentication & Secrets, Data Mapping & Semantics, Failure & Refresh Behaviour, Frontend Presentation, Scope / Quality / Extensions), each carrying a reasoned recommendation. The three mandatory extension opt-in prompts are included as Q13-Q15 and are **deliberately re-asked**: they were answered "No" at inception on the grounds that BW-ACE is a demo/PoC, and that reasoning does not carry over unchanged now that the application handles credentials and makes authenticated network calls into a customer system.
+
+**Context**: INCEPTION - Requirements Analysis, awaiting user answers (GATE)
+
+---
+
+## Requirements Analysis — Answers Received (OData Connectivity)
+**Timestamp**: 2026-08-19T00:00:00Z
+**User Input**: "please use the recommended answers and continue"
+
+**AI Response**: Memory tools requested by the `check-memory-first` hook remain unavailable in this session; `aidlc-docs/aidlc-state.md` was used as the authoritative record of prior decisions, and the recorded preferences (minimal code comments with rationale in aidlc-docs per NFR-8.4, type hints per NFR-8.3, engine/presentation separation per NFR-8.1, project detail kept out of the memory graph) were applied.
+
+**Answers recorded in `odata-connectivity-questions.md`**: Q1=A, Q2=A, Q3=A, Q4=A, Q5=A, Q6=A, Q7=A, Q8=A, Q9=A, Q10=A, Q11=A, Q12=A, Q13=A, Q14=A, Q15=A. Q16=B, Q17=B, Q18=C — **carried forward from inception, explicitly marked as not re-decided.**
+
+**Ambiguity in the instruction, resolved by disclosure rather than by guessing**: the extension opt-in questions (Q16-Q18) carry only conditional recommendations — option A is "recommended for production-grade applications", option B is "suitable for PoCs". BW-ACE is a PoC that has just acquired credential handling and authenticated outbound calls, so "the recommended answer" genuinely has no single value for those three. Recording an inferred answer as a user decision on a security question was rejected. The inception answers were carried forward unchanged, marked as carry-forward in both the question file and `requirements.md` §10.11, and the residual exposure was bounded by writing the security behaviours as **binding NFR-9.1 to NFR-9.7** rather than as extension rules — extension status now governs only whether a formal per-stage compliance audit runs, not whether credentials may sit in session state or TLS verification may be disabled. The user was told the two upgrades still available (Security Baseline to A; PBT to Partial, which fits the response mapper) and that both are cheap now and expensive after Code Generation.
+
+**Mandatory contradiction and ambiguity analysis performed** on the answer set. Three pairings checked because an inconsistent selection is easy to make by accident:
+- **Q1 vs Q11** (explicit mode with no silent fallback, against all-or-nothing replacement retaining previous data) — consistent, both point the same way.
+- **Q7 vs Q11** (permanent hybrid provenance with `criticality` always bundled, against refusing partial data) — reads as a direct contradiction and resolves on scoping: Q7 determines *which* datasets live mode fetches at all (five of six, by design), Q11 governs what happens when a dataset that should have arrived did not. Recorded as an explicit note under FR-14.1/FR-14.6 so the distinction survives into Application Design rather than being rediscovered as a bug.
+- **Q4 vs Q16** (Basic auth only, against security enforcement off) — consistent and mitigated by NFR-9.x being binding independently.
+
+No clarification round raised. No contradiction found in the answers themselves.
+
+**Requirements written** as a new `requirements.md` §10 (§10.1 intent analysis through §10.14 summary): FR-13.1-13.8 connection and configuration, FR-14.1-14.10 fetch/mapping/failure/refresh with the dataset-to-endpoint table, NFR-9.1-9.7 credential and transport security, NFR-10.1-10.4 reliability, NFR-11.1-11.5 testability, FR-15.1-15.7 frontend, plus contradiction analysis, out-of-scope list, extension configuration, five new assumptions (A-8 to A-12), traceability, and summary.
+
+**Substantive positions taken, each with the reasoning in the document rather than left implicit**:
+- The §10.2 finding is carried into a binding requirement: FR-13.3 makes every service path configurable with the given names as shipped defaults, and **FR-15.6 obliges the UI to state that the defaults are placeholders**. The tool must not assert to a customer that SAP delivers services it does not deliver.
+- **Paging classified as a correctness requirement, not a performance one** (FR-14.4/14.5 note). A single unpaged GET truncates at the service's default page size, and BW-ACE would then compute a complete-looking assessment over partial data — plausible individually, wrong collectively, with nothing on screen to reveal it. This is the most dangerous failure mode the feature can produce.
+- **Live data reuses the existing `loader.py` validators** (FR-14.3) after explicit field-by-field mapping. Live records then face the same referential integrity checks as an upload, surface in the same validation panel, and preserve the existing content-fingerprint cache key, leaving the approved two-phase `compute_base`/`apply_config` caching untouched.
+- **The Q6=A consequence was recorded, not buried**: with no TLS opt-out, a demo against a self-signed SAP sandbox is blocked until a CA bundle is produced. Stated as an accepted cost under NFR-9.4, with NFR-9.5 requiring the error message to name `BWACE_ODATA_CA_BUNDLE` as the remedy so it is not a debugging exercise in front of a customer.
+- **`criticality` has no live source** and is excluded from the live fetch set by design — business criticality, migration priority and downtime tolerance are business judgements, not BW metadata. Labelled provenance rather than invented data.
+
+**Existing document amended in place**: §3.9 out-of-scope list — "Live connection to a real SAP BW system" struck through and marked superseded by §10; "encryption at rest or in transit" marked partially superseded (in transit now mandatory and non-disableable, at rest still out of scope); write-back re-stated as still excluded and now enforced by NFR-9.6. Amended rather than silently rewritten, following the NFR-4.1 precedent from the seventh iteration.
+
+**No code, configuration, test, or dependency file was modified.**
+
+**Context**: INCEPTION - Requirements Analysis complete, awaiting user approval (GATE). Q15=A selected full AI-DLC treatment, so the next stage is User Stories.
+
+---
+
+## Requirements Approval + Workflow Override — OData Connectivity Implemented
+**Timestamp**: 2026-08-19T00:00:00Z
+**User Input**: "I've approved but I don't want full AI-DLC treatment, just impelment the new changes for OData"
+
+**AI Response**: Memory tools requested by the `check-memory-first` hook remain unavailable in this session; `aidlc-docs/aidlc-state.md` was used as the authoritative record. Recorded preferences applied throughout — minimal code comments with rationale in aidlc-docs (NFR-8.4), type hints (NFR-8.3), engine/presentation separation (NFR-8.1).
+
+Recorded approval of `requirements.md` §10. **Workflow override recorded**: Q15 revised from A (full treatment) to C (direct implementation with documents updated in place) on explicit user instruction — user control outranks the stage recommendation. Stages skipped: User Stories, Workflow Planning, Application Design and Functional Design as gated stages, and the Code Generation planning gate. Their substance was written directly into the existing artifacts instead.
+
+**Implemented** (10 source and test files, 6 documents, 3 project files):
+- **New `src/bwace/engine/odata.py` (C17)** — env-resolved settings, stdlib `.env` reader, `AuthStrategy` protocol with `BasicAuth`, injectable `Transport` plus `HttpxTransport`, retry policy, OData paging, per-dataset field maps, process-chain flattening, `$metadata` connection test, all-or-nothing `fetch_landscape`.
+- **`loader.py`** — `load_with_live()` and a third provenance value `live`. No validator changed.
+- **`config.py`** — OData defaults and env var names.
+- **New `views/connection_settings.py`**, `widgets.mode_indicator`, 4 new frames, 7-entry navigation, 8 new session-state keys, live-aware landscape resolution.
+- **`httpx==0.28.1`** pinned; `.env` git-ignored before any connector code was written; `.env.example` documented.
+- **44 new tests** (37 connector, 7 app).
+
+**Decisions taken during implementation, with reasoning**:
+1. **C17 was made a second ingress rather than a parallel pipeline.** It maps live records into the dataset schemas, serialises to JSON bytes, and hands them to the existing loader. Live data therefore receives identical validation, identical error messages in the existing panel, and an identical content fingerprint, leaving the approved two-phase compute cache untouched. This was the highest-leverage decision in the feature and made a large part of it free.
+2. **A deviation from FR-15.3 was chosen and recorded** rather than silently either way: the mode chip renders from a single call in `main.py` above each view's header instead of inside `widgets.page_header`. It preserves `st.header` as the first element (which the smoke tests assert on) and avoids editing seven view signatures, while keeping the guarantee that the chip is visible on every view. Recorded as BR-P15.3.
+3. **Credentials were kept structurally out of reach**: `OdataSettings` holds none, `BasicAuth.__repr__` masks both fields, and `scrub()` strips URL userinfo and known secret values from every user-reachable message. TLS `verify=False` is unreachable — no code path or environment variable produces it.
+4. **`.env` support was implemented with a 15-line stdlib reader** rather than adding `python-dotenv`, keeping the new dependency count at one.
+5. **`httpx` is imported lazily inside the transport**, so the engine imports and demo mode runs with the package absent — NFR-10.2 verified rather than assumed.
+6. **Both V2 and V4 envelope shapes are parsed** and SAP's `/Date(ms)/` is normalised alongside ISO. Cheap tolerance at an integration boundary whose real contract is unknown.
+7. **`DATASET_LABELS` was de-duplicated** into `frames.py`; it already existed twice and this feature needed a third copy.
+8. **"Revert to Demo Data" now also leaves live mode**, so one control reliably restores the demo landscape.
+
+**One test was found to be weak and strengthened before being kept**: the secret-leak test could have passed vacuously if the environment had not been read or if the element accessors had returned nothing. Guards were added asserting that the settings actually reflect the environment and that the collected page text exceeds 500 characters.
+
+**Verification**: 133/133 tests pass (was 89). `get_diagnostics` clean on all 10 touched source and test files. Editable reinstall clean. Headless `streamlit run` boots with HTTP 200 and no warnings or errors in the log. No test contacts the network. Background Streamlit process stopped afterwards.
+
+**Stated limits, not buried**: live connectivity is unverified end to end — coverage is recorded fixtures plus a stubbed transport, so service paths and possibly property names will need adjusting against a real system; the placeholder service names remain the shipped defaults and both the UI and README say so; TLS has no opt-out, so a self-signed sandbox needs `BWACE_ODATA_CA_BUNDLE`; and the assumed process-chain row shape is the mapping most likely to need changing.
+
+**Documents updated in place**: engine `business-rules.md` (BR-13, 14 rules), presentation `business-rules.md` (BR-P15, 12 rules), `frontend-components.md` (§12), `components.md` (C17 plus C3 amendment and inventory row), `build-instructions.md`, `unit-test-instructions.md`, `README.md`.
+
+**Context**: CONSTRUCTION - OData connectivity implemented and verified under a user-directed condensed workflow. No open gate.

@@ -404,3 +404,28 @@ Every rule above was executed against the bundled dataset before this document w
 | Risk bands | 1 Low, 3 Medium, 1 High |
 
 Two prior errors were corrected as a result of this run: story S6.1 AC5 had named a Purchasing-to-Supply-Chain conflict that is not a violation, and `unit-of-work.md` Unit 2 criterion 6 had implied only two objects carry any dormancy indication.
+
+---
+
+## BR-13 — Live SAP OData Ingress (added 2026-08-19, requirements §10)
+
+Implemented in `engine/odata.py` (C17). Verified by `tests/engine/test_odata.py` (37 tests, no network).
+
+| ID | Rule |
+|---|---|
+| BR-13.1 | Exactly five datasets have a live source: `object_inventory`, `complexity`, `data_volume`, `dependencies`, `usage_logs`. `criticality` has none and always comes from the bundled or uploaded file. Business criticality, migration priority, and downtime tolerance are business judgements, not BW metadata. |
+| BR-13.2 | Connection configuration resolves from environment variables with the §10.4.1 defaults. Service paths are placeholders and must remain overridable. |
+| BR-13.3 | `OdataSettings` holds no credential. Credentials are read only when a transport is constructed, live only for that transport's lifetime, and never enter a settings object, session state, or a rendered value. |
+| BR-13.4 | `BasicAuth.__repr__` masks both user and password, so no traceback or log line can leak them. |
+| BR-13.5 | Every user-reachable message passes through `scrub()`, which removes URL userinfo and any known secret value. |
+| BR-13.6 | TLS verification is `True` or a CA bundle path. `False` is unreachable by construction — there is no code path and no environment variable that produces it. |
+| BR-13.7 | A TLS failure's detail names `BWACE_ODATA_CA_BUNDLE` as the remedy. |
+| BR-13.8 | Retries apply only to `TIMEOUT`, `SERVER_ERROR`, and `TRANSPORT_ERROR`. `UNAUTHORISED` (401/403) and `NOT_FOUND` (404) are terminal on the first attempt. |
+| BR-13.9 | Collection retrieval follows `d.__next` (V2) or `@odata.nextLink` (V4) until exhausted. Reaching the record cap sets `truncated` and produces a warning naming `BWACE_ODATA_MAX_RECORDS`; it never returns quietly. |
+| BR-13.10 | Mapping accepts either the SAP property name or the BW-ACE field name for each field. `/Date(ms)/` and ISO-8601-with-time both normalise to an ISO date. A non-numeric value in a numeric field raises `MappingError`, which is reported as `MALFORMED` against that endpoint. |
+| BR-13.11 | Mapped records are serialised to JSON bytes and passed to `loader._load_all` through `load_with_live`, so live data receives identical structural, type, and referential-integrity validation to an uploaded file, and the content fingerprint is computed the same way. Provenance precedence is live over uploaded over bundled. |
+| BR-13.12 | `fetch_landscape` populates `load` only when every live endpoint succeeded **and** the assembled landscape validated. Any endpoint failure returns `load=None`, leaving the caller's existing landscape untouched. |
+| BR-13.13 | Only HTTP GET is issued. There is no write path, so no CSRF token handling exists. |
+| BR-13.14 | `httpx` is imported inside `HttpxTransport.get`, so the engine imports, and demo mode runs, with the package absent. A missing package surfaces as a `TRANSPORT_ERROR` with a plain message. |
+
+**Verification record**: paging across two pages, the record cap, 401, 404, 500-then-success, timeout exhausting three attempts, a non-JSON body, a payload with no collection, a live payload missing a required field, and a five-endpoint fetch assembling the full 22-object landscape were each executed as tests before this section was written. `criticality` provenance asserted as `bundled` in the same run.

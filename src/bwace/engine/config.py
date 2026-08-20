@@ -125,3 +125,48 @@ DMK_FREEZE_UNTIL = date(2028, 1, 1)
 
 # Node types that are never schedulable / never violation endpoints (BR-8.4, BR-9.1b)
 NON_SCHEDULABLE_NODE_TYPES = frozenset({"EXTERNAL", "CONSTRAINT", "SHARED_OBJECT", "SOURCE"})
+
+
+# ---- Live SAP OData connectivity (requirements §10) ----------------------
+
+# Service paths are placeholders, not SAP-delivered endpoints. See requirements
+# §10.2 — no SAP-delivered service by these names could be found; they ship as
+# defaults only so the configured endpoint list matches what was promised.
+ODATA_DEFAULT_SERVICE_ROOT = "/sap/opu/odata/sap"
+
+ODATA_DEFAULT_SERVICE_PATHS: dict[str, str] = {
+    "object_inventory": "RSOD_CATALOG_SRV/ObjectCatalog",
+    "complexity": "RSOD_ADSO_SRV/AdsoMetadata",
+    "data_volume": "RSOD_ADSO_SRV/AdsoVolume",
+    "dependencies": "RSPC_API_SRV/ProcessChains",
+    "usage_logs": "RSOD_USAGE_SRV/Results",
+}
+
+# criticality is deliberately absent: business criticality, migration priority
+# and downtime tolerance are business judgements, not BW metadata (FR-14.1).
+ODATA_LIVE_DATASETS: tuple[str, ...] = (
+    "object_inventory", "complexity", "data_volume", "dependencies", "usage_logs",
+)
+
+ODATA_DEFAULT_TIMEOUT_SECONDS = 30.0
+ODATA_DEFAULT_MAX_RECORDS = 5_000
+ODATA_RETRY_ATTEMPTS = 3
+ODATA_RETRY_BACKOFF_SECONDS = 0.5
+
+ODATA_ENV_VARS: dict[str, str] = {
+    "base_url": "BWACE_ODATA_BASE_URL",
+    "service_root": "BWACE_ODATA_SERVICE_ROOT",
+    "user": "BWACE_ODATA_USER",
+    "password": "BWACE_ODATA_PASSWORD",
+    "ca_bundle": "BWACE_ODATA_CA_BUNDLE",
+    "timeout": "BWACE_ODATA_TIMEOUT_SECONDS",
+    "max_records": "BWACE_ODATA_MAX_RECORDS",
+}
+
+ODATA_SERVICE_ENV_VARS: dict[str, str] = {
+    "object_inventory": "BWACE_ODATA_SERVICE_INVENTORY",
+    "complexity": "BWACE_ODATA_SERVICE_COMPLEXITY",
+    "data_volume": "BWACE_ODATA_SERVICE_VOLUME",
+    "dependencies": "BWACE_ODATA_SERVICE_DEPENDENCIES",
+    "usage_logs": "BWACE_ODATA_SERVICE_USAGE",
+}

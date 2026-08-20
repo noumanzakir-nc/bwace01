@@ -99,7 +99,7 @@ X) Other (please describe after [Answer]: tag below)
 
 ### Question 5 — Concrete data expectations in acceptance criteria
 
-NFR-7.2 requires tests asserting the reference classification for the bundled Arla dataset. Validation established specific expected outcomes, including three edge cases: `IN200` must be Decommission via the dormancy ceiling, `IM100` must be Replicate As-Is via the activity floor, and `FI100GC` sits 0.7 points below the Effort threshold.
+NFR-7.2 requires tests asserting the reference classification for the bundled Acme dataset. Validation established specific expected outcomes, including three edge cases: `IN200` must be Decommission via the dormancy ceiling, `IM100` must be Replicate As-Is via the activity floor, and `FI100GC` sits 0.7 points below the Effort threshold.
 
 Should acceptance criteria name specific objects and expected results?
 

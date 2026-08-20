@@ -13,7 +13,7 @@
 - **Build System**: None detected
 - **Project Structure**: Empty (documentation/requirements only)
 - **Reverse Engineering Needed**: No
-- **Workspace Root**: `c:\git\rfp\arla-sap`
+- **Workspace Root**: `c:\git\rfp\acme-sap`
 
 ## Code Location Rules
 - **Application Code**: Workspace root (NEVER in aidlc-docs/)
@@ -269,3 +269,92 @@ Answers: Q1=A, Q2=A, Q3=B, Q4=A, Q5=A, Q6=A, Q7=A, Q8=A, Q9=A, Q10=A. Checked fo
 **Artifacts changed**: `.streamlit/config.toml`, `theme.py` (rewritten), `charts.py` (rewritten), `widgets.py`, `main.py`, all 6 view files, `tests/app/test_theme_contrast.py` (rewritten, 8 → 12 tests), `requirements.md` (§2.6.6 FR-12.1–12.8, NFR-4.1a, NFR-4.7, §3.4.1 marked historical, new §3.4.2), `business-rules.md` (BR-P1.7, BR-P1.7a, BR-P1.8, BR-P3.1/3.2 corrected, BR-P3.6–3.8, BR-P6.13–6.16, BR-P14), `frontend-components.md` (component tree, C11/C13/C14 tables, test keys, smoke targets, story coverage).
 
 **Verified**: 89/89 tests pass (was 85; +4 net new theme tests). `get_diagnostics` clean on all 11 touched source and test files. Headless `streamlit run` boots clean, HTTP 200, no config warnings. Throwaway verification script deleted.
+
+## In Flight: SAP OData Connectivity — Live / Demo Mode (2026-08-19, eighth iteration)
+User request: add OData connectivity so the application can run against a live SAP BW system, switchable with demo mode, with a Connection Settings page, Basic/OAuth authentication, and credentials held in environment variables.
+
+**Stage**: 🔵 INCEPTION — Workspace Detection complete, Requirements Analysis in progress (Comprehensive depth). Request type New Feature, scope Multiple Components (both units), complexity Complex — first external integration, first network I/O, first secret handling, first new runtime dependency since inception.
+
+**Workspace Detection outcome**: project is now **brownfield** (code exists). **Reverse Engineering SKIPPED** — no `inception/reverse-engineering/` artifacts exist, but this codebase was forward-engineered by this same workflow and the existing `application-design/`, per-unit `functional-design/`, and `build-and-test/` artifacts document it at higher fidelity than reverse engineering would recover. They are current as of the seventh iteration, same day.
+
+**Finding — the named services are not SAP-delivered.** Searched SAP documentation and community sources for `RSOD_ADSO_SRV`, `RSPC_API_SRV`, `RSOD_CATALOG_SRV`: no SAP-delivered service by any of those names is discoverable. SAP delivers the *framework* — Gateway services under `/sap/opu/odata/sap/<SERVICE_NAME>`, each with `$metadata` and entity-set collections — and the documented BW pattern is to create and activate such a service over BW metadata or a BW query. The analyst's framing of OData-over-Gateway as the SAP-standard route is correct; the three service names are illustrative placeholders. Material because hardcoding them yields a tool that demos well and fails on first contact with a real landscape. Put to the user as Q2; recommendation is configurable paths defaulting to the names as given.
+
+**Secondary observations recorded, none assumed**: the six BW-ACE datasets do not map one-to-one onto the five named endpoints (`criticality` is a business judgement matrix with no BW source; `usage_logs` needs per-object aggregates a `Results` collection must be reduced into); SAP on-premise Gateway hosts commonly present self-signed or private-CA certificates, so TLS handling needs an explicit decision; OData V2 server-side paging returns `__next`, so an unpaged GET silently truncates and would produce a quietly wrong assessment; `Landscape.sources` currently carries only `bundled`/`uploaded` and needs a third `live` value.
+
+**Extension opt-ins deliberately re-asked** (Q16-Q18). All three were "No" at inception on demo/PoC grounds; that reasoning does not survive the introduction of credential handling and authenticated outbound calls. Existing configuration stands until the user answers.
+
+**Gate**: awaiting answers in `aidlc-docs/inception/requirements/odata-connectivity-questions.md` (18 questions across 6 sections plus 3 opt-ins). No code modified. Contradiction checks queued for Q1 vs Q11, Q4 vs Q16, and Q7 vs Q11.
+
+### OData Connectivity — Requirements Analysis COMPLETE (awaiting approval)
+User instruction: *"please use the recommended answers and continue"*.
+
+**Answers**: Q1-Q15 = A (every substantive question carried an unambiguous recommendation). Q16-Q18 (extension opt-ins) **carried forward from inception unchanged** (No / No / No) and flagged as *not re-decided* — their option text recommends A for production-grade work and B for PoCs, so "the recommended answer" had no single value for a PoC that has just grown a credentialed integration. Recording a guess as a user decision was rejected in favour of stating the gap. Extension Configuration table above is unchanged; no extension rule files loaded.
+
+**Contradiction analysis performed on three risky pairings, all consistent**:
+- Q1 (explicit mode, no silent fallback) vs Q11 (all-or-nothing, retain previous) — same direction, no silent substitution either way.
+- Q7 (hybrid: `criticality` always bundled) vs Q11 (all-or-nothing) — reads as a contradiction but resolves on scoping: Q7 fixes *which* datasets live mode fetches at all (5 of 6, by design); Q11 governs a dataset that *should* have arrived and did not. Written into the FR-14.1/FR-14.6 note so the distinction survives into design.
+- Q4 (Basic only) vs Q16 (security extension off) — mitigated by making the security behaviours binding NFRs rather than extension rules.
+
+**Key decisions recorded in `requirements.md` §10** (FR-13.x connection/config, FR-14.x fetch/mapping/failure/refresh, FR-15.x frontend, NFR-9.x credential and transport security, NFR-10.x reliability, NFR-11.x testability):
+1. **Two modes, Demo by default**, live gated behind a successful `$metadata` connection test. No silent fallback in either direction.
+2. **Service paths configurable, defaulting to the names as given.** The §10.2 finding stands: `RSOD_ADSO_SRV`, `RSPC_API_SRV`, `RSOD_CATALOG_SRV` are not SAP-delivered. FR-15.6 obliges the UI to say the defaults are placeholders — the tool must not assert to a customer that SAP ships services it does not ship.
+3. **Five of six datasets live.** `criticality` (business criticality, migration priority, downtime tolerance) is a business judgement matrix with no BW source; stays bundled/uploaded, labelled. `Landscape.sources` gains a third value `live`.
+4. **Live records reuse the existing `loader.py` validators** after an explicit field-by-field mapping — same referential integrity checks, same validation panel, and the existing content-fingerprint cache key keeps working, so two-phase `compute_base`/`apply_config` caching is untouched.
+5. **Paging is a correctness requirement, not a performance one.** OData V2 `__next` followed to exhaustion, 5,000-record cap per dataset with a loud warning. An unpaged GET would truncate silently and produce a confidently wrong assessment.
+6. **All-or-nothing replacement** (FR-14.6) and **manual refresh only** (FR-14.7) — no re-fetch on threshold drags or navigation.
+7. **Credentials: environment variables only.** Never session state, never rendered, always masked (NFR-9.1-9.3, 9.7). Read-only GET, so no CSRF handling (NFR-9.6).
+8. **TLS verification cannot be disabled** (NFR-9.4). Accepted cost recorded openly: a self-signed SAP sandbox will refuse to connect until a CA bundle is supplied via `BWACE_ODATA_CA_BUNDLE`; NFR-9.5 requires the error to name that remedy.
+9. **`httpx` pinned, synchronous, injectable transport.** First new runtime dependency since inception. Chosen for per-operation timeouts and explicit TLS-context control, which FR-14.10 and NFR-9.4 depend on.
+10. **Basic auth only this iteration**; OAuth and X.509 out of scope and stated as such in the UI rather than shown as dead controls (FR-13.8).
+11. **Verification by recorded fixtures** against a stubbed transport, 9 mandated scenarios (NFR-11.2). Documentation must state that live connectivity is unverified until run against a customer system (NFR-11.4) — no claiming fixture coverage as live-verified.
+
+**§3.9 out-of-scope list amended in place**: "Live connection to a real SAP BW system" struck through and marked superseded; "encryption in transit" marked partially superseded; write-back re-stated as still excluded and now enforced by NFR-9.6.
+
+**AI-DLC treatment (Q15 = A, full)**: User Stories → Workflow Planning → Application Design → Functional Design (per affected unit) → Code Generation → Build and Test, with approval gates throughout. Rationale: a second data ingress alongside `loader.py` changes the shape of the engine, and the architecture documents are currently the authoritative description of this system.
+
+**Gate**: awaiting approval of `requirements.md` §10. No code modified.
+
+### OData Connectivity — APPROVED and IMPLEMENTED (2026-08-19, eighth iteration)
+User: *"I've approved but I don't want full AI-DLC treatment, just implement the new changes for OData"*.
+
+**Workflow override recorded**: requirements §10 approved; **Q15 revised from A (full) to C (direct implementation, documents updated in place)** on explicit user instruction. User control outranks the stage recommendation. Stages skipped: User Stories, Workflow Planning, Application Design (as a gated stage), Functional Design (as a gated stage), Code Generation planning gate. Same treatment as the Source Data View and design-refresh iterations, at larger scope.
+
+**Code delivered**
+
+| File | Change |
+|---|---|
+| `src/bwace/engine/odata.py` | **New (C17).** Settings from env, `.env` reader, `AuthStrategy`/`BasicAuth`, injectable `Transport` + `HttpxTransport`, retry policy, paging, field maps, dependency flattening, `test_connection`, `fetch_landscape`. |
+| `src/bwace/engine/loader.py` | `load_with_live()` added; `_load_all` gained `live_names`; provenance helper returns `live`/`uploaded`/`bundled`. Validation untouched. |
+| `src/bwace/engine/config.py` | OData defaults: service root, 5 placeholder service paths, live dataset tuple, timeout, record cap, retry constants, env var names. |
+| `src/bwace/app/views/connection_settings.py` | **New view.** Render-only, returns a `SettingsAction`. |
+| `src/bwace/app/main.py` | 7-entry nav, 8 new session-state keys, `_run_connection_test`, `_run_live_fetch`, `_handle_settings_action`, live-aware `_resolve_landscape`, mode chip render, `.env` load at startup. |
+| `src/bwace/app/frames.py` | 4 new frames + canonical `DATASET_LABELS` (de-duplicated from `main.py` and `source_data.py`). |
+| `src/bwace/app/widgets.py` | `mode_indicator` — 3 states, palette-only. |
+| `pyproject.toml` | `httpx==0.28.1` pinned. First new runtime dependency since inception. |
+| `.gitignore`, `.env.example` | `.env` ignored before any connector code was written (NFR-9.7); documented example with placeholder warning. |
+| `tests/engine/test_odata.py` | **New, 37 tests.** |
+| `tests/app/test_smoke_views.py` | 7 new tests, `VIEWS` extended to 7. |
+
+**Verified**: 133/133 tests pass (was 89; +37 connector, +7 app). `get_diagnostics` clean on all 10 touched source and test files. Editable reinstall clean. Headless `streamlit run` boots, HTTP 200, no warnings or errors in the log. No network reached by any test.
+
+**Implementation decisions worth keeping**
+
+1. **C17 is a second ingress, not a replacement.** It fetches, maps to the dataset schemas, serialises to JSON bytes, and hands them to the existing loader — so live data gets identical validation, identical error messages in the same panel, and an identical content fingerprint, leaving the two-phase compute cache untouched. This was the single highest-leverage choice: it made ~60% of the feature free.
+2. **Deviation from FR-15.3, recorded**: the mode chip renders from one call in `main.py` above each view's header rather than inside `widgets.page_header`. Keeps `st.header` first (the smoke tests assert on it) and avoided editing seven view signatures. Same visibility guarantee.
+3. **`OdataSettings` holds no credential by design.** Credentials are read only when a transport is built; `BasicAuth.__repr__` masks both fields; `scrub()` strips URL userinfo and known secret values from every user-reachable message. A dedicated test sets real-looking credentials, renders the page, and asserts neither value appears anywhere — with guards so it cannot pass vacuously.
+4. **TLS verification is unreachable as `False`** — `verify` is `True` or a bundle path, with no env var or code path producing anything else.
+5. **`.env` support without a new dependency** — 15-line stdlib reader, existing environment always wins.
+6. **`httpx` imported lazily inside `HttpxTransport.get`**, so the engine imports and demo mode runs with the package absent (NFR-10.2 held).
+7. **Both OData V2 and V4 envelope shapes parsed** (`d.results`/`__next` and `value`/`@odata.nextLink`), and SAP's `/Date(ms)/` normalised alongside ISO. Cheap tolerance at a real integration boundary.
+8. **`DATASET_LABELS` de-duplicated** — it existed in two places and this feature needed a third. Now one definition in `frames.py`.
+9. **Revert to Demo Data now also leaves live mode**, so one control reliably restores the demo landscape.
+
+**Documents updated in place**: `requirements.md` (§10 new, §3.9 amended), engine `business-rules.md` (BR-13, 14 rules + verification record), presentation `business-rules.md` (BR-P15, 12 rules), `frontend-components.md` (§12), `components.md` (C17, C3 amendment, inventory), `build-instructions.md` (dependency + env vars), `unit-test-instructions.md` (133 tests), `README.md` (new Live SAP OData mode section with setup, placeholder warning, behaviour, and a 7-row troubleshooting table; test counts corrected).
+
+**Honest limits, stated not buried**
+- Live connectivity is **unverified end to end**. Coverage is fixtures plus a stubbed transport. Expect to adjust service paths, and possibly property names, on first contact with a real system.
+- The placeholder service names remain the shipped defaults, and the UI and README both say so.
+- TLS has no opt-out, so a self-signed sandbox needs `BWACE_ODATA_CA_BUNDLE` before it will connect. The error message names that variable.
+- The assumed process-chain row shape (`SourceNodeId`/`TargetNodeId`/`EdgeType`) is a guess at a real service contract, and is the mapping most likely to need adjustment.
+
+**Extensions**: still No/No/No, carried forward and not re-decided. Security behaviours are binding as NFR-9.x regardless. The two available upgrades (Security Baseline to A; PBT Partial on the mapper) remain open and were flagged to the user.

@@ -229,7 +229,7 @@ The network chart reads the graph directly rather than through a frame, because 
 5. Stage 5 `apply_config` reclassifies. `FI100GC` now has Effort 66.3 ≥ 66, and Value 60.6 ≥ 33, so it moves from `REPLICATE_AS_IS` to `REBUILD_AS_DATA_PRODUCT`.
 6. Stage 6 re-renders: donut now 6 / 12 / 4; the scatter's vertical Effort boundary shifts left by one unit and `FI100GC`'s point changes colour; the top-10 bar chart is unchanged because Business Value did not change; KPI strip unchanged because the Decommission set did not change.
 
-This is the demo moment requirements §4.5 anticipated: one control movement visibly reclassifies Arla's flagship P&L query, and the derivation table explains exactly why.
+This is the demo moment requirements §4.5 anticipated: one control movement visibly reclassifies Acme's flagship P&L query, and the derivation table explains exactly why.
 
 ---
 

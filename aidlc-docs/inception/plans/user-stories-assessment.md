@@ -2,10 +2,10 @@
 
 ## Request Analysis
 
-- **Original Request**: Build BW-ACE, a tool that analyses SAP BW metadata, usage logs, and dependencies to classify BW objects as Decommission, Replicate As-Is, or Rebuild as Data Product, presented through a dashboard, object detail view, dependency visualisation, and wave planner. Demo/PoC for an Arla customer presentation.
+- **Original Request**: Build BW-ACE, a tool that analyses SAP BW metadata, usage logs, and dependencies to classify BW objects as Decommission, Replicate As-Is, or Rebuild as Data Product, presented through a dashboard, object detail view, dependency visualisation, and wave planner. Demo/PoC for an Acme customer presentation.
 - **User Impact**: **Direct.** The entire deliverable is a user interface. Every requirement in §2.6 of the requirements document describes something a person looks at and interacts with.
 - **Complexity Level**: **Medium-to-complex.** The data model is small, but the analytical model has non-obvious behaviour (two axes, guard rules, adjustable thresholds) and four distinct views serving different jobs.
-- **Stakeholders**: The presenter running the demo, and the Arla audience being presented to. Within that audience, the requirements imply several distinct interests — technical migration decisions, business ownership of individual reports, and programme-level sequencing.
+- **Stakeholders**: The presenter running the demo, and the Acme audience being presented to. Within that audience, the requirements imply several distinct interests — technical migration decisions, business ownership of individual reports, and programme-level sequencing.
 
 ## Assessment Criteria Met
 

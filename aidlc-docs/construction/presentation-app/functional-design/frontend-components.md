@@ -327,3 +327,49 @@ NFR-7.3 requires each view to render without error. The testable surface:
 C12 is fully unit-testable without Streamlit. C11's palette and contrast logic is testable as pure data. C13's figure construction is testable by asserting figure properties. C14 and C15 require Streamlit's test harness and are limited to smoke coverage, as NFR-7.3 anticipated.
 
 **Explicitly outside the automated surface.** `AppTest` runs the Python render path; it does not evaluate CSS or expose rendered HTML, and it does not apply `.streamlit/config.toml`'s `[theme]` block. So the menu row styling (BR-P3.6), the card treatment (BR-P14.4), and the native widget accent colour (BR-P1.7) cannot be asserted by these tests. What *was* verified mechanically for the theme block: Streamlit's own `_populate_theme_msg` was called and the resulting `CustomThemeConfig` protobuf — the exact object delivered to the browser — reports `primary_color: "#0050e6"` for both the main and sidebar namespaces. The CSS selectors still need a human eye in a browser.
+
+---
+
+## 12. Connection Settings (added 2026-08-19, requirements §10)
+
+### 12.1 New members
+
+| Component | Addition | Notes |
+|---|---|---|
+| C15 `views` | `connection_settings.render(...) -> SettingsAction \| None` | Render-only. Returns an action; `main.py` performs every fetch and state change (BR-P15.8). |
+| C14 `widgets` | `mode_indicator(mode, host, fetched_at, stale) -> None` | Three visual states, all from `palette()`. Rendered once in `main.py`, so it appears above every view. |
+| C12 `frames` | `environment_frame`, `endpoint_config_frame`, `endpoint_status_frame`, `provenance_frame` | Pure. `environment_frame` renders presence flags and `(hidden)`, never a credential value. |
+| C12 `frames` | `DATASET_LABELS` | Moved here as the single definition; `main.py` and `views/source_data.py` now import it instead of holding their own copies. |
+| C16 `app` | 8 new session-state keys | `data_mode`, `odata_settings`, `odata_endpoints`, `odata_tested_ok`, `live_payloads`, `live_fetched_at`, `live_warnings`, `live_error`. |
+
+### 12.2 Navigation
+
+`VIEW_NAMES` is now seven entries; `Connection Settings` is last. The control is unchanged (`st.radio`, key `sidebar-view-nav`), so no existing test key moved.
+
+### 12.3 Test keys
+
+| Key | Element |
+|---|---|
+| `connection-mode-selector` | Radio — Demo Data / Live OData |
+| `connection-env-table` | Environment variable presence table |
+| `connection-endpoint-config-table` | Service paths and resolved URLs |
+| `connection-test-button` | Test Connection |
+| `connection-refresh-button` | Refresh from SAP |
+| `connection-reload-button` | Reload Configuration |
+| `connection-endpoint-table` | Per-endpoint test or fetch results |
+| `connection-provenance-table` | Per-dataset provenance |
+
+### 12.4 Interaction map additions
+
+| Interaction | Triggers | Recomputes | Rule |
+|---|---|---|---|
+| Mode set to live | Fetch if no payload held, else reuse | Full landscape reload, then assessment | BR-P15.2, BR-P15.10 |
+| Mode set to demo | Landscape reload from files | Assessment | BR-P15.11 |
+| Test Connection | Five `$metadata` probes | Nothing | BR-P15.2 |
+| Refresh from SAP | Five collection fetches with paging | Full landscape reload, then assessment | BR-P15.10, BR-13.12 |
+| Reload Configuration | Re-read environment; clears tested flag | Nothing | FR-13.6 |
+| Threshold drag while live | Nothing — payloads are reused | Assessment only | BR-P15.10 |
+
+### 12.5 Smoke test targets
+
+`VIEWS` extended to seven so the existing per-view render loop covers Connection Settings. Six further tests cover: demo as the startup default, render without credentials, live refused without a passing test, connection test without credentials naming the missing variables, no secret in the rendered page, live end to end through a stubbed transport, and Revert to Demo Data leaving live mode.

@@ -276,7 +276,11 @@ def check_referential_integrity(
     return ValidationReport(issues=tuple(issues))
 
 
-def _load_all(read: dict[str, bytes], uploaded_names: frozenset[str] = frozenset()) -> LoadOutcome:
+def _load_all(
+    read: dict[str, bytes],
+    uploaded_names: frozenset[str] = frozenset(),
+    live_names: frozenset[str] = frozenset(),
+) -> LoadOutcome:
     all_issues: list[ValidationIssue] = []
 
     inv_raw, r = parse_dataset("object_inventory", read["object_inventory"])
@@ -326,9 +330,17 @@ def _load_all(read: dict[str, bytes], uploaded_names: frozenset[str] = frozenset
         nodes=nodes,
         edges=edges,
         fingerprint=fingerprint(read),
-        sources={name: ("uploaded" if name in uploaded_names else "bundled") for name in DATASET_FILES},
+        sources={name: _provenance(name, uploaded_names, live_names) for name in DATASET_FILES},
     )
     return LoadOutcome(landscape=landscape, report=report)
+
+
+def _provenance(name: str, uploaded_names: frozenset[str], live_names: frozenset[str]) -> str:
+    if name in live_names:
+        return "live"
+    if name in uploaded_names:
+        return "uploaded"
+    return "bundled"
 
 
 def load_bundled() -> LoadOutcome:
@@ -340,3 +352,16 @@ def load_with_overrides(overrides: dict[str, bytes]) -> LoadOutcome:
     read = {name: (DATA_DIR / filename).read_bytes() for name, filename in DATASET_FILES.items()}
     read.update(overrides)
     return _load_all(read, uploaded_names=frozenset(overrides))
+
+
+def load_with_live(live: dict[str, bytes], uploads: dict[str, bytes] | None = None) -> LoadOutcome:
+    """Live datasets over uploads over bundled files, then the same validation as any other load (FR-14.3)."""
+    uploads = uploads or {}
+    read = {name: (DATA_DIR / filename).read_bytes() for name, filename in DATASET_FILES.items()}
+    read.update(uploads)
+    read.update(live)
+    return _load_all(
+        read,
+        uploaded_names=frozenset(set(uploads) - set(live)),
+        live_names=frozenset(live),
+    )

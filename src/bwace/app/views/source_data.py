@@ -6,15 +6,7 @@ import streamlit as st
 
 from bwace.engine.models import Landscape
 from bwace.app import frames, widgets
-
-DATASET_LABELS = {
-    "object_inventory": "Object Inventory",
-    "usage_logs": "Usage Logs",
-    "criticality": "Criticality Matrix",
-    "dependencies": "Dependency Map",
-    "data_volume": "Data Volume Metrics",
-    "complexity": "Complexity Scores",
-}
+from bwace.app.frames import DATASET_LABELS
 
 
 def _dependency_tables(landscape: Landscape) -> dict[str, pd.DataFrame]:
@@ -27,7 +19,7 @@ def _dependency_tables(landscape: Landscape) -> dict[str, pd.DataFrame]:
 def render(landscape: Landscape) -> None:
     widgets.page_header(
         "Source Data",
-        "Read-only view of the six datasets exactly as loaded (bundled or uploaded).",
+        "Read-only view of the six datasets exactly as loaded (bundled, uploaded, or live).",
     )
 
     dataset_name = st.selectbox(

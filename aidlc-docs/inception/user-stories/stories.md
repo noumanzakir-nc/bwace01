@@ -11,7 +11,7 @@
 
 ## Reference Dataset Expectations
 
-Established by executing the approved model against the bundled Arla dataset during Requirements Analysis. Cited by acceptance criteria throughout.
+Established by executing the approved model against the bundled Acme dataset during Requirements Analysis. Cited by acceptance criteria throughout.
 
 **Expected distribution after guard rules: 5 Rebuild / 13 Replicate As-Is / 4 Decommission**
 
@@ -37,10 +37,10 @@ Established by executing the approved model against the bundled Arla dataset dur
 
 *Requirements: FR-1.1 to FR-1.5*
 
-## S1.1 — Load the bundled Arla landscape
+## S1.1 — Load the bundled Acme landscape
 
 **As a** Migration Architect
-**I want** the tool to open with the full simulated Arla landscape already loaded
+**I want** the tool to open with the full simulated Acme landscape already loaded
 **So that** I can begin assessing immediately without preparing data
 
 **Requirements**: FR-1.1, FR-1.2

@@ -197,7 +197,7 @@ The document specifies JSON/CSV files. Section 2.1 also mentions CSV as an accep
 
 A) **JSON files only** — six JSON files under `data/`, exactly matching sections 3.1-3.6. Simplest, zero setup.
 
-B) **JSON files, plus the ability to upload a replacement CSV/JSON in the UI** — ships with the Arla demo data but lets you load a customer's own extract live. Good demo differentiator, modest extra effort. (Recommended.)
+B) **JSON files, plus the ability to upload a replacement CSV/JSON in the UI** — ships with the Acme demo data but lets you load a customer's own extract live. Good demo differentiator, modest extra effort. (Recommended.)
 
 C) **SQLite database** — seeded from the JSON on first run; enables richer querying but adds a layer with little benefit at this data size.
 

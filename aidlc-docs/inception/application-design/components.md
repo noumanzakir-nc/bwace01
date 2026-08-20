@@ -27,8 +27,11 @@ Business rules and numeric values are deliberately absent from this document. Th
 | C14 | `widgets` | 2 — presentation | Yes | No (renders) |
 | C15 | `views` | 2 — presentation | Yes | No (renders) |
 | C16 | `app` | 2 — presentation | Yes | No (entry point) |
+| C17 | `odata` | 1 — engine | No | No (network I/O) |
 
-**NFR-8.1 compliance**: components C1–C10 have no import of Streamlit, Plotly, or any presentation library. Components C11–C16 contain no scoring, classification, dependency, or wave arithmetic — they read values from the result object produced by C10.
+**NFR-8.1 compliance**: components C1–C10 and C17 have no import of Streamlit, Plotly, or any presentation library. Components C11–C16 contain no scoring, classification, dependency, or wave arithmetic — they read values from the result object produced by C10.
+
+**C17 added 2026-08-19** (eighth iteration, requirements §10) as a second ingress alongside C3, not a replacement: C17 fetches and maps, then hands bytes to C3, which validates. See §2.11. The Connection Settings view is a member of C15 and the mode indicator a member of C14, so no new presentation component was created.
 
 ---
 
@@ -85,6 +88,8 @@ Business rules and numeric values are deliberately absent from this document. Th
 **Interface**: functions returning either a validated `Landscape` or a `ValidationReport`. Never raises for user-supplied data problems.
 
 **Satisfies**: FR-1.1, FR-1.2, FR-1.3, FR-1.4, FR-1.5, NFR-6.4
+
+**Amended 2026-08-19**: gained `load_with_live(live, uploads)` and a third provenance value `live`. Precedence is live over uploaded over bundled. Validation, fingerprinting, and error reporting are unchanged and shared with every other ingress path.
 
 ---
 
@@ -211,6 +216,30 @@ Business rules and numeric values are deliberately absent from this document. Th
 **Interface**: see `services.md`.
 
 **Satisfies**: FR-6.1, FR-9.1, FR-9.2, and the orchestration implied by every view story
+
+---
+
+## 2.11 C17 — `odata` (added 2026-08-19, requirements §10)
+
+**Purpose**: Fetch BW metadata from SAP Gateway OData services and hand it to C3 as bytes in the same shape as a file, so live data faces the same validation as an upload.
+
+**Responsibilities**
+- Resolve connection settings from environment variables; report presence, never values
+- Build Basic authentication headers behind an `AuthStrategy` protocol, so OAuth is an added strategy rather than a change here
+- Issue read-only GETs through an injectable `Transport`, with explicit timeouts, a bounded retry on transient failure only, and TLS verification that cannot be switched off
+- Follow OData V2 `__next` paging to exhaustion, bounded by a record cap that warns rather than truncating silently
+- Map SAP property names onto the six dataset schemas field by field, normalising `/Date(ms)/` and ISO dates and coercing numeric and boolean values
+- Flatten process-chain edge rows into the nodes/edges document C3 validates
+- Probe `$metadata` per service for the connection test, classifying each endpoint outcome
+- Scrub URL userinfo and known secret values from every message that can reach a user
+
+**Interface**: `OdataSettings.from_env`, `transport_from_env`, `test_connection` returning per-endpoint results, and `fetch_landscape` returning a `LiveFetchOutcome` whose `load` is populated only when all five live datasets arrived intact.
+
+**Deliberately not responsible for**: the criticality matrix (no BW source — business judgement), any write operation, `$metadata` parsing for schema inference, and session state.
+
+**Satisfies**: FR-13.x, FR-14.x, NFR-9.x, NFR-10.1, NFR-10.3, NFR-11.1, NFR-11.2
+
+**Dependencies**: C2 (`config`) for defaults, C3 (`loader`) for validation and assembly. `httpx` is imported lazily inside the transport so demo mode never needs it.
 
 ---
 

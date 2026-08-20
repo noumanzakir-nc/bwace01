@@ -1,7 +1,7 @@
 """Reusable UI fragments. See business-rules.md BR-P4, BR-P9, BR-P10."""
 from __future__ import annotations
 
-from datetime import date
+from datetime import date, datetime
 
 import streamlit as st
 
@@ -160,3 +160,24 @@ def validation_panel(report: ValidationReport) -> None:
             st.error(message)
         else:
             st.warning(message)
+
+
+def mode_indicator(mode: str, host: str, fetched_at: datetime | None, stale: bool) -> None:
+    """FR-15.3 / FR-15.5. Which data is on screen must never require navigating away to answer."""
+    p = palette()
+    if mode == "demo":
+        fill, text, label = p["accent"].hex, p["text_on_accent"].hex, "\U0001F4C1 Demo Data"
+        detail = "bundled or uploaded files"
+    elif stale:
+        fill, text = p["warm_neutral"].hex, p["category_decommission"].hex
+        label, detail = f"\u26a0 Live: {host}", "last refresh failed - showing previously loaded data"
+    else:
+        fill, text = p["category_rebuild"].hex, p["text_on_accent"].hex
+        label = f"\U0001F517 Live: {host}"
+        detail = f"fetched {fetched_at:%Y-%m-%d %H:%M UTC}" if fetched_at else "not yet fetched"
+    st.markdown(
+        f"<div style='display:inline-block; background-color:{fill}; color:{text}; "
+        f"padding:4px 12px; border-radius:6px; font-weight:600; font-size:0.9em;'>"
+        f"{label}</div> <span style='color:{p['ink_muted'].hex}; font-size:0.85em;'>{detail}</span>",
+        unsafe_allow_html=True,
+    )
