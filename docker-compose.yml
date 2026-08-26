@@ -1,0 +1,23 @@
+services:
+  bwace:
+    build: .
+    image: bwace:latest
+    ports:
+      - "8501:8501"
+    env_file:
+      # Copy .env.example to .env and fill in your values.
+      # The file is optional — omit it or leave it empty for demo-data-only mode.
+      - path: .env
+        required: false
+    volumes:
+      # Optional: mount a local data directory to upload custom CSV files inside the app.
+      # Uncomment the line below if you use the file-upload feature and want uploads to persist.
+      # - ./data:/app/data
+      - /dev/null:/dev/null  # placeholder so the volumes key is never empty
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8501/_stcore/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s

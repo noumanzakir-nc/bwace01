@@ -69,6 +69,73 @@ The app opens in your default browser. If it does not, the script prints a local
 | App starts but shows stale results after re-running the script | A `.venv` from a previous, incompatible version | Delete `.venv` and re-run to force a clean reinstall |
 | Fonts look different from the brand mockup | No internet access to the Google Fonts CDN | Expected and harmless — the UI falls back to system fonts automatically (NFR-3.2) |
 
+---
+
+## Running with Docker
+
+Docker is the easiest way to run BW-ACE without installing Python or any dependencies locally. It works identically on Windows and Linux.
+
+**Prerequisites**: [Docker Desktop](https://www.docker.com/products/docker-desktop/) (Windows / macOS) or [Docker Engine](https://docs.docker.com/engine/install/) (Linux).
+
+### Quick start
+
+**Windows** — open a terminal in the project root and run:
+
+```
+docker-run.bat
+```
+
+**Linux / macOS** — open a terminal in the project root and run:
+
+```
+chmod +x docker-run.sh   # first time only
+./docker-run.sh
+```
+
+Both scripts build the image automatically on first run and start the container. Open **http://localhost:8501** in your browser.
+
+To force a rebuild (e.g. after pulling new source):
+
+```
+docker-run.bat --build        # Windows
+./docker-run.sh --build       # Linux / macOS
+```
+
+### Using Docker Compose
+
+```
+docker compose up --build
+```
+
+On subsequent runs (no source changes) omit `--build`:
+
+```
+docker compose up
+```
+
+To stop the container press `Ctrl+C`, or run `docker compose down` from another terminal.
+
+### Environment variables (live OData mode)
+
+Copy `.env.example` to `.env` and fill in your values. Docker Compose and both helper scripts automatically pass the file to the container when it exists. The file is never baked into the image.
+
+```
+cp .env.example .env     # Linux / macOS
+copy .env.example .env   # Windows
+```
+
+### Docker troubleshooting
+
+| Problem | Cause | Fix |
+|---|---|---|
+| "Docker was not found on PATH" | Docker Desktop is not installed or not running | Install Docker Desktop and start it |
+| Port 8501 already in use | Another app is bound to that port | Stop the other app, or change the port: `docker run -p 8502:8501 bwace:latest` |
+| Build fails with a pip error | Network issue during image build | Check connectivity and retry; `docker build --no-cache -t bwace:latest .` forces a clean build |
+| Container starts but the browser cannot connect | Firewall or VPN blocking 8501 | Allow port 8501 in your firewall rules, or access from the same machine |
+| Fonts look different | No internet access to the Google Fonts CDN inside the container | Expected and harmless — the UI falls back to system fonts automatically (NFR-3.2) |
+
+---
+
 ## Live SAP OData mode
 
 The app starts in **Demo Data** mode every time and works with no network, no credentials, and no configuration. Live mode is opt-in, read-only, and reached from the **Connection Settings** view.
