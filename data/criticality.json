@@ -6,7 +6,7 @@
   {"solution_area": "Inventory Management", "criticality": 80, "migration_priority": 3, "downtime_tolerance_hours": 12},
   {"solution_area": "Product Costing", "criticality": 75, "migration_priority": 4, "downtime_tolerance_hours": 24},
   {"solution_area": "Quality Management", "criticality": 65, "migration_priority": 5, "downtime_tolerance_hours": 48},
-  {"solution_area": "Treasury Management", "criticality": 50, "migration_priority": 5, "downtime_tolerance_hours": 24},
+  {"solution_area": "Treasury Management", "criticality": 95, "migration_priority": 5, "downtime_tolerance_hours": 24},
   {"solution_area": "Logistics Costing", "criticality": 60, "migration_priority": 4, "downtime_tolerance_hours": 24},
   {"solution_area": "Purchasing", "criticality": 60, "migration_priority": 4, "downtime_tolerance_hours": 24},
   {"solution_area": "Transport Management", "criticality": 45, "migration_priority": 5, "downtime_tolerance_hours": 48},
