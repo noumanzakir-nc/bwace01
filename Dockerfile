@@ -8,6 +8,7 @@ RUN pip install --no-cache-dir -r requirements.txt
 COPY pyproject.toml ./
 COPY src/ ./src/
 COPY data/ ./data/
+COPY logo-file/ ./logo-file/
 
 RUN pip install --no-cache-dir --upgrade pip \
     && pip install --no-cache-dir -e ".[dev]"

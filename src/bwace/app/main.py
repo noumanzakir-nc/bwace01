@@ -1,6 +1,7 @@
 """Streamlit entry point. Sole owner of session state. See business-logic-model.md #1."""
 from __future__ import annotations
 
+import base64
 import sys
 from pathlib import Path
 
@@ -170,7 +171,19 @@ def _cached_compute_base(fingerprint: str, _landscape):
     return compute_base(_landscape)
 
 
+def _logo_data_uri() -> str:
+    """Return the brand logo as a base64 data URI, cached across reruns."""
+    logo_path = Path(__file__).resolve().parents[3] / "logo-file" / "brand_logo.jpg"
+    raw = logo_path.read_bytes()
+    return "data:image/jpeg;base64," + base64.b64encode(raw).decode()
+
+
 def _render_sidebar() -> None:
+    # st.logo() pins the image to the very top-left of the app frame —
+    # outside the sidebar — so it remains visible even when the sidebar is
+    # collapsed. The sidebar title below it provides the app name.
+    st.logo(_logo_data_uri(), size="large")
+
     with st.sidebar:
         st.title("BW-ACE")
 

@@ -176,6 +176,26 @@ def _css() -> str:
             letter-spacing: 0.06em;
             font-weight: 600;
         }}
+        /* Brand logo via st.logo(). It renders in the stSidebarHeader area
+           (top-left of the full app frame) so it stays visible when the
+           sidebar is collapsed. Override the React-applied inline max-height
+           by targeting the img directly with higher specificity. */
+        [data-testid="stSidebarHeader"] img,
+        [data-testid="stSidebarCollapsedControl"] img {{
+            background-color: #ffffff;
+            border-radius: 8px;
+            padding: 4px 10px;
+            max-height: 48px !important;
+            height: 48px !important;
+            width: auto !important;
+            object-fit: contain;
+        }}
+        [data-testid="stSidebarCollapsedControl"] img {{
+            height: 32px !important;
+            max-height: 32px !important;
+            width: 32px !important;
+            padding: 4px;
+        }}
     """
 
 
