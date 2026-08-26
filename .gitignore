@@ -1,6 +1,8 @@
 .kiro/
 .vscode/
 .vs/
+.aidlc-rule-details/
+.github/
 
 aidlc-docs/
 requirements/
