@@ -13,11 +13,12 @@ class Band(NamedTuple):
 
 
 VALUE_WEIGHTS: dict[str, float] = {
-    "usage_frequency": 29.41,
-    "distinct_users": 17.65,
-    "criticality": 23.53,
-    "outgoing_dependencies": 17.65,
-    "incoming_dependencies": 11.76,
+    "usage_frequency": 20,
+    "distinct_users": 10,
+    "criticality": 35,
+    "outgoing_dependencies": 10,
+    "incoming_dependencies": 10,
+    "data_volume": 15,
 }
 
 EFFORT_WEIGHTS: dict[str, float] = {
@@ -91,7 +92,14 @@ RECENCY_TIERS: tuple[RecencyTier, ...] = (
     RecencyTier(INF, 0.25),
 )
 
-DEFAULT_SCORING = ScoringConfig()
+DEFAULT_SCORING = ScoringConfig(
+    value_threshold=15,
+    effort_threshold=30,
+    dormancy_days=290,
+    dormancy_executions=5,
+    activity_days=90,
+    activity_executions=25,
+)
 DEFAULT_WAVES = WaveConfig()
 
 
