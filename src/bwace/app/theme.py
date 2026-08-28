@@ -182,7 +182,6 @@ def _css() -> str:
            by targeting the img directly with higher specificity. */
         [data-testid="stSidebarHeader"] img,
         [data-testid="stSidebarCollapsedControl"] img {{
-            background-color: #ffffff;
             border-radius: 8px;
             padding: 4px 10px;
             max-height: 48px !important;
