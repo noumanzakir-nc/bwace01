@@ -173,9 +173,9 @@ def _cached_compute_base(fingerprint: str, _landscape):
 
 def _logo_data_uri() -> str:
     """Return the brand logo as a base64 data URI, cached across reruns."""
-    logo_path = Path(__file__).resolve().parents[3] / "logo-file" / "brand_logo.jpg"
+    logo_path = Path(__file__).resolve().parents[3] / "logo-file" / "brand_logo.png"
     raw = logo_path.read_bytes()
-    return "data:image/jpeg;base64," + base64.b64encode(raw).decode()
+    return "data:image/png;base64," + base64.b64encode(raw).decode()
 
 
 def _render_sidebar() -> None:
