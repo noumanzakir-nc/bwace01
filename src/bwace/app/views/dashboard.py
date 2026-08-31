@@ -16,13 +16,15 @@ def _exports(result: AssessmentResult) -> None:
         st.download_button(
             "Download Classification CSV", classification_csv(result),
             file_name="classification_report.csv", key="export-classification-csv",
-            width="stretch",
+            width="stretch", type="primary", icon=":material/table_view:",
+            help="Every assessed object with its category, scores and risk band.",
         )
     with col2:
         st.download_button(
             "Download Wave Plan JSON", json.dumps(wave_recommendation_json(result), indent=2),
             file_name="wave_recommendation.json", key="export-wave-json",
-            width="stretch",
+            width="stretch", icon=":material/data_object:",
+            help="Suggested migration sequencing, grouped into waves by dependency and value.",
         )
 
 
