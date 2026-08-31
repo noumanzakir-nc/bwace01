@@ -195,6 +195,38 @@ def _css() -> str:
             width: 32px !important;
             padding: 4px;
         }}
+
+
+                /* Responsive layout. Three things: give the page back its side gutters
+           on medium screens, let column rows wrap instead of squeezing, and
+           allow metric labels to wrap to a second line. */
+        div[data-testid="stMetricLabel"] p {{
+            white-space: normal !important;
+            overflow-wrap: break-word;
+        }}
+       
+        @media (max-width: 1000px) {{
+            div[data-testid="stHorizontalBlock"] {{
+                flex-wrap: wrap !important;
+                row-gap: 12px !important;
+            }}
+            div[data-testid="stHorizontalBlock"] > div[data-testid="stColumn"] {{
+                flex: 1 1 45% !important;
+                min-width: 45% !important;
+            }}
+        }}
+         div[data-testid="stMainBlockContainer"] {{
+            padding-left: 1.5rem !important;
+            padding-right: 1.5rem !important;
+            padding-top: 0rem !important;
+        }}
+        @media (max-width: 560px) {{
+            div[data-testid="stHorizontalBlock"] > div[data-testid="stColumn"] {{
+                flex: 1 1 100% !important;
+                min-width: 100% !important;
+            }}
+        }}
+
     """
 
 
