@@ -32,12 +32,23 @@ def sidebar_section(label: str) -> None:
 
 
 def kpi_strip(kpis: LandscapeKpis) -> None:
-    cols = st.columns(4)
-    cols[0].metric("Total Objects", kpis.total_objects)
-    cols[1].metric("Total Storage", f"{kpis.total_storage_gb} GB")
-    cols[2].metric("Decommission %", f"{kpis.decommission_pct:.1f}%")
-    cols[3].metric("Reclaimable Storage", f"{kpis.reclaimable_storage_gb} GB")
-
+    cols = st.columns(4, gap="small")
+    cols[0].metric(
+        "Total Objects", kpis.total_objects, icon=":material/inventory_2:",
+        help="Number of BW objects in the assessed landscape.",
+    )
+    cols[1].metric(
+        "Total Storage", f"{kpis.total_storage_gb} GB", icon=":material/database:",
+        help="Combined storage footprint across all assessed objects.",
+    )
+    cols[2].metric(
+        "Decommission %", f"{kpis.decommission_pct:.1f}%", icon=":material/delete_sweep:",
+        help="Share of objects classified as Decommission.",
+    )
+    cols[3].metric(
+        "Reclaimable Storage", f"{kpis.reclaimable_storage_gb} GB", icon=":material/recycling:",
+        help="Storage freed if all Decommission candidates are retired.",
+    )
 
 def classification_badge(classification: Classification) -> None:
     style = category_style(classification.category)
