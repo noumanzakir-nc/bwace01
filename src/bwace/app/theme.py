@@ -125,7 +125,7 @@ def _css() -> str:
         section[data-testid="stSidebar"] div[data-testid="stRadio"] div[role="radiogroup"] {{
             gap: 2px;
         }}
-        section[data-testid="stSidebar"] div[data-testid="stRadio"] label {{
+        section[data-testid="stSidebar"] label[data-testid="stRadioOption"] {{
             width: 100%;
             padding: 8px 12px;
             border-radius: 6px;
@@ -133,18 +133,22 @@ def _css() -> str:
             cursor: pointer;
             transition: background-color 120ms ease;
         }}
-        section[data-testid="stSidebar"] div[data-testid="stRadio"] label:hover {{
+        section[data-testid="stSidebar"] label[data-testid="stRadioOption"]:hover {{
             background-color: {hover};
         }}
-        section[data-testid="stSidebar"] div[data-testid="stRadio"] label > div:first-child,
-        section[data-testid="stSidebar"] div[data-testid="stRadio"] label > div:has(input[type="radio"]) {{
+        section[data-testid="stSidebar"] label[data-testid="stRadioOption"] > div > div > div:first-child {{
             display: none;
         }}
-        section[data-testid="stSidebar"] div[data-testid="stRadio"] label:has(input:checked) {{
+        section[data-testid="stSidebar"] label[data-testid="stRadioOption"] div[data-testid="stMarkdownContainer"] p {{
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }}
+        section[data-testid="stSidebar"] label[data-testid="stRadioOption"][data-selected="true"] {{
             background-color: {accent};
             border-left: 3px solid {ink};
         }}
-        section[data-testid="stSidebar"] div[data-testid="stRadio"] label:has(input:checked) * {{
+        section[data-testid="stSidebar"] label[data-testid="stRadioOption"][data-selected="true"] * {{
             color: {on_accent} !important;
             font-weight: 600;
         }}

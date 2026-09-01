@@ -33,10 +33,19 @@ from bwace.app.views import (
     wave_planner,
 )
 
-VIEW_NAMES = (
-    "Dashboard", "Object Detail", "Dependencies", "Wave Planner",
-    "Scenario Compare", "Source Data", "Connection Settings",
-)
+VIEWS = {
+    "Dashboard": ":material/dashboard:",
+    "Object Detail": ":material/description:",
+    "Dependencies": ":material/account_tree:",
+    "Wave Planner": ":material/calendar_month:",
+    "Scenario Compare": ":material/compare_arrows:",
+    "Source Data": ":material/database:",
+    "Connection Settings": ":material/settings:",
+}
+
+VIEW_NAMES = tuple(VIEWS)
+
+VIEW_NAMES = tuple(VIEWS)
 
 
 def _init_session_state() -> None:
@@ -195,6 +204,8 @@ def _render_sidebar() -> None:
             "View", VIEW_NAMES, key="sidebar-view-nav",
             index=VIEW_NAMES.index(st.session_state["active_view"]),
             label_visibility="collapsed",
+            width="stretch",
+            format_func=lambda name: f"{VIEWS.get(name, '')} {name}",
         )
 
         widgets.sidebar_section("Scoring")
